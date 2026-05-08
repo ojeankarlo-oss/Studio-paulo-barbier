@@ -1,0 +1,17 @@
+{
+  "name": "Studio Paulo Barbier",
+  "short_name": "Paulo Barbier",
+  "description": "Agende seu corte no Studio Paulo Barbier",
+  "start_url": "/studio-paulo-barbier/",
+  "display": "standalone",
+  "background_color": "#0d0d0d",
+  "theme_color": "#c8a97e",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://api.dicebear.com/7.x/initials/svg?seed=PB&backgroundColor=c8a97e&textColor=0d0d0d",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    }
+  ]
+}

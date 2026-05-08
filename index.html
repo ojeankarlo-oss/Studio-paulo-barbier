@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+  <meta name="theme-color" content="#0d0d0d"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <title>Studio Paulo Barbier</title>
+  <link rel="manifest" href="manifest.json"/>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{background:#0d0d0d;font-family:Georgia,serif;-webkit-tap-highlight-color:transparent;}
+    input,select,textarea,button{-webkit-appearance:none;appearance:none;}
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+  <script type="text/babel" data-presets="react">
+const { useState, useEffect } = React;
+
+// ─── STORAGE (localStorage) ───────────────────────────────────────
+const DB = {
+  get: async (k) => { try { const v = localStorage.getItem('pb_'+k); return v ? JSON.parse(v) : null; } catch { return null; } },
+  set: async (k, v) => { try { localStorage.setItem('pb_'+k, JSON.stringify(v)); } catch(e) { console.error(e); } },
+};
+
+
+// ─── STORAGE ──────────────────────────────────────────────────────
+const DB = {
+  async get(k) { try { const r = await window.storage.get(k); return r ? JSON.parse(r.value) : null; } catch { return null; } },
+  async set(k, v) { try { await window.storage.set(k, JSON.stringify(v)); } catch(e) { console.error(e); } },
+};
+
+// ─── DEFAULTS ─────────────────────────────────────────────────────
+const DEF_SERVICES = [
+  {id:"s1",name:"Corte Tradicional",price:40,duration:30,icon:"✂️",active:true},
+  {id:"s2",name:"Corte + Barba",price:60,duration:50,icon:"💈",active:true},
+  {id:"s3",name:"Barba",price:30,duration:25,icon:"🪒",active:true},
+  {id:"s4",name:"Corte com Desenho",price:70,duration:60,icon:"🎨",active:true},
+  {id:"s5",name:"Corte Infantil",price:35,duration:30,icon:"👦",active:true},
+  {id:"s6",name:"Hidratação",price:45,duration:40,icon:"💧",active:true},
+];
+
+const DEF_PROMOS = [
+  {id:"p1",title:"Segunda Econômica",desc:"Corte tradicional com desconto toda segunda-feira",badge:"SEG",color:"#22c55e",active:true},
+  {id:"p2",title:"Assinatura Mensal",desc:"4 cortes por mês + barba inclusa por R$149",badge:"VIP",color:"#f59e0b",active:true},
+  {id:"p3",title:"Corte com Desenho",desc:"Arte exclusiva no cabelo — agende com antecedência",badge:"ART",color:"#8b5cf6",active:true},
+];
+
+const DEF_SETTINGS = {
+  barbearia:"Studio Paulo Barbier", endereco:"São Paulo - SP",
+  adminPass:"1234", emergencyCode:"0000",
+  pixKey:"", pixName:"Paulo Barbier", pixBank:"",
+  instagram:"", whatsapp:"", tiktok:"", facebook:"",
+  telegramToken:"", telegramChatId:"",
+};
+
+const HOURS = ["09:00","09:30","10:00","10:30","11:00","11:30","13:00","13:30","14:00","14:30","15:00","15:30","16:00","16:30","17:00","17:30","18:00","18:30"];
+
+const today = () => new Date().toISOString().split("T")[0];
+const ago90 = () => { const d=new Date(); d.setDate(d.getDate()-90); return d.toISOString(); };
+const fmtDate = (d) => { const [y,m,day]=d.split("-"); return `${day}/${m}/${y}`; };
+const todayLabel = () => { const d=new Date(); return d.toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"}); };
+
+// ─── TELEGRAM ─────────────────────────────────────────────────────
+const sendTelegram = async (token, chatId, msg) => {
+  if (!token || !chatId) return false;
+  try {
+    const r = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ chat_id: chatId, text: msg, parse_mode:"HTML" })
+    });
+    return r.ok;
+  } catch { return false; }
+};
+
+// ─── BASE COMPONENTS ──────────────────────────────────────────────
+const css = `@keyframes spin{to{transform:rotate(360deg)}} @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}`;
+
+const Card = ({children,style={}}) => <div style={{background:"#1a1a1a",borderRadius:14,padding:"18px 20px",border:"1px solid #2a2a2a",animation:"fadeIn .3s ease",...style}}>{children}</div>;
+const Badge = ({children,color="#c8a97e"}) => <span style={{background:color,color:"#fff",fontSize:10,fontWeight:700,borderRadius:4,padding:"2px 8px",letterSpacing:1}}>{children}</span>;
+const Loader = () => <><style>{css}</style><div style={{display:"flex",justifyContent:"center",padding:40}}><div style={{width:32,height:32,border:"3px solid #2a2a2a",borderTop:"3px solid #c8a97e",borderRadius:"50%",animation:"spin 1s linear infinite"}}/></div></>;
+
+const Btn = ({children,onClick,variant="primary",style={},disabled=false,full=false}) => {
+  const v={
+    primary:{background:"linear-gradient(135deg,#c8a97e,#a07850)",color:"#0d0d0d"},
+    ghost:{background:"transparent",color:"#c8a97e",border:"1px solid #c8a97e44"},
+    danger:{background:"#7f1d1d",color:"#fca5a5"},
+    success:{background:"#14532d",color:"#86efac"},
+    soft:{background:"#1f1f1f",color:"#aaa",border:"1px solid #333"},
+  };
+  return <button onClick={onClick} disabled={disabled} style={{border:"none",borderRadius:10,fontWeight:700,cursor:disabled?"not-allowed":"pointer",fontSize:14,padding:"11px 20px",fontFamily:"inherit",opacity:disabled?0.5:1,width:full?"100%":"auto",transition:"opacity .2s",...v[variant],...style}}>{children}</button>;
+};
+
+const Inp = ({label,placeholder,value,onChange,type="text",style={}}) => (
+  <div>
+    {label&&<label style={{color:"#888",fontSize:11,display:"block",marginBottom:5,letterSpacing:.5,textTransform:"uppercase"}}>{label}</label>}
+    <input type={type} placeholder={placeholder} value={value} onChange={onChange}
+      style={{background:"#111",border:"1px solid #2e2e2e",borderRadius:10,color:"#e5e5e5",padding:"11px 15px",fontSize:14,fontFamily:"inherit",width:"100%",boxSizing:"border-box",outline:"none",...style}}/>
+  </div>
+);
+
+const Sel = ({label,value,onChange,children}) => (
+  <div>
+    {label&&<label style={{color:"#888",fontSize:11,display:"block",marginBottom:5,letterSpacing:.5,textTransform:"uppercase"}}>{label}</label>}
+    <select value={value} onChange={onChange} style={{background:"#111",border:"1px solid #2e2e2e",borderRadius:10,color:"#e5e5e5",padding:"11px 15px",fontSize:14,fontFamily:"inherit",width:"100%",boxSizing:"border-box",outline:"none"}}>{children}</select>
+  </div>
+);
+
+const Section = ({title,children}) => (
+  <div style={{marginBottom:20}}>
+    <p style={{color:"#c8a97e",fontSize:11,fontWeight:700,letterSpacing:2,textTransform:"uppercase",marginBottom:12}}>{title}</p>
+    {children}
+  </div>
+);
+
+// ─── PIX MODAL ────────────────────────────────────────────────────
+function PixModal({service,settings,onClose,onPaid}) {
+  const [paid,setPaid]=useState(false);
+  return (
+    <div style={{position:"fixed",inset:0,background:"#000c",zIndex:300,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+      <style>{css}</style>
+      <Card style={{width:"100%",maxWidth:360,background:"#161616"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+          <h3 style={{color:"#c8a97e",fontSize:18}}>💸 Pagar com PIX</h3>
+          <button onClick={onClose} style={{background:"none",border:"none",color:"#555",fontSize:24,cursor:"pointer",lineHeight:1}}>×</button>
+        </div>
+        {!settings.pixKey?(
+          <div style={{textAlign:"center",padding:"20px 0"}}><div style={{fontSize:40,marginBottom:12}}>⚙️</div><p style={{color:"#777",fontSize:14,lineHeight:1.6}}>Chave PIX não configurada.<br/>Configure no ADM → Configurações.</p></div>
+        ):paid?(
+          <div style={{textAlign:"center",padding:"20px 0"}}><div style={{fontSize:56,marginBottom:12}}>✅</div><h3 style={{color:"#22c55e",marginBottom:6}}>Pagamento enviado!</h3><p style={{color:"#777",fontSize:13}}>O Studio confirmará em breve</p><Btn onClick={onPaid} style={{marginTop:20}} full>Continuar →</Btn></div>
+        ):(
+          <>
+            <div style={{background:"#111",borderRadius:12,padding:16,marginBottom:14,textAlign:"center"}}>
+              <p style={{color:"#666",fontSize:12,marginBottom:2}}>SERVIÇO</p>
+              <p style={{color:"#e5e5e5",fontWeight:600,marginBottom:6}}>{service.name}</p>
+              <p style={{color:"#c8a97e",fontSize:30,fontWeight:700,margin:0}}>R$ {service.price},00</p>
+            </div>
+            <div style={{background:"#111",borderRadius:12,padding:16,marginBottom:14}}>
+              <p style={{color:"#666",fontSize:11,marginBottom:10,letterSpacing:1}}>DADOS PIX</p>
+              {[["Favorecido",settings.pixName],["Chave",settings.pixKey],["Banco",settings.pixBank]].filter(([,v])=>v).map(([k,v])=>(
+                <div key={k} style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
+                  <span style={{color:"#666",fontSize:13}}>{k}</span>
+                  <span style={{color:k==="Chave"?"#c8a97e":"#ddd",fontSize:13,fontWeight:600}}>{v}</span>
+                </div>
+              ))}
+            </div>
+            <div style={{background:"#0c1f0c",border:"1px solid #1a4d1a",borderRadius:10,padding:12,marginBottom:14,fontSize:12,color:"#86efac",lineHeight:1.7}}>
+              📱 Abra seu banco → PIX → transfira <strong>R$ {service.price},00</strong> para a chave acima
+            </div>
+            <Btn onClick={()=>setPaid(true)} full style={{marginBottom:8}}>✅ Já realizei o pagamento</Btn>
+            <Btn variant="ghost" onClick={onClose} full style={{fontSize:13}}>Pagar presencialmente</Btn>
+          </>
+        )}
+      </Card>
+    </div>
+  );
+}
+
+// ─── TELA: AGENDAR ────────────────────────────────────────────────
+function ScreenAgendar({settings,services}) {
+  const [step,setStep]=useState(1);
+  const [form,setForm]=useState({name:"",phone:"",service:null,date:today(),time:"",notify:"app",pagou:false});
+  const [done,setDone]=useState(false);
+  const [saving,setSaving]=useState(false);
+  const [booked,setBooked]=useState([]);
+  const [showPix,setShowPix]=useState(false);
+  const [blocked,setBlocked]=useState(false);
+  const activeServices = services.filter(s=>s.active);
+
+  useEffect(()=>{
+    (async()=>{
+      const apts=await DB.get("appointments")||[];
+      setBooked(apts.filter(a=>a.date===form.date).map(a=>a.time));
+    })();
+  },[form.date]);
+
+  const submit=async(pagou=false)=>{
+    setSaving(true);
+    const clients=await DB.get("clients")||[];
+    if(clients.find(c=>c.phone===form.phone&&c.blocked)){setBlocked(true);setSaving(false);return;}
+    const apts=await DB.get("appointments")||[];
+    const newApt={id:Date.now().toString(),client:form.name,phone:form.phone,service:form.service.name,serviceId:form.service.id,date:form.date,time:form.time,notify:form.notify,pagou,status:"confirmed",createdAt:new Date().toISOString()};
+    await DB.set("appointments",[...apts,newApt]);
+    if(!clients.find(c=>c.phone===form.phone)){
+      await DB.set("clients",[...clients,{id:Date.now().toString(),name:form.name,phone:form.phone,blocked:false,noShows:0,createdAt:new Date().toISOString()}]);
+    }
+    // Telegram
+    if(settings.telegramToken&&settings.telegramChatId){
+      const msg=`💈 <b>Novo Agendamento!</b>\n\n👤 <b>${form.name}</b>\n📱 ${form.phone}\n✂️ ${form.service.name}\n📅 ${fmtDate(form.date)} às ${form.time}\n💰 R$${form.service.price},00${pagou?" — <b>PIX PAGO ✓</b>":""}\n📣 Notif: ${form.notify}`;
+      sendTelegram(settings.telegramToken,settings.telegramChatId,msg);
+    }
+    setForm(f=>({...f,pagou})); setDone(true); setSaving(false);
+  };
+
+  if(done) return (
+    <div style={{textAlign:"center",padding:"40px 20px",animation:"fadeIn .4s ease"}}><style>{css}</style>
+      <div style={{fontSize:64,marginBottom:16}}>✅</div>
+      <h2 style={{color:"#c8a97e",marginBottom:6,fontSize:22}}>Agendado com sucesso!</h2>
+      <p style={{color:"#888",marginBottom:4}}>{form.service?.name}</p>
+      <p style={{color:"#c8a97e",fontWeight:700,fontSize:18,marginBottom:12}}>{fmtDate(form.date)} às {form.time}</p>
+      {form.pagou&&<div style={{marginBottom:12}}><Badge color="#22c55e">PIX PAGO ✓</Badge></div>}
+      <p style={{color:"#555",fontSize:13}}>Confirmação via {form.notify==="sms"?"SMS":form.notify==="telegram"?"Telegram":"App"}</p>
+      <Btn onClick={()=>{setStep(1);setForm({name:"",phone:"",service:null,date:today(),time:"",notify:"app",pagou:false});setDone(false);setBlocked(false);}} style={{marginTop:28}} full>+ Novo Agendamento</Btn>
+    </div>
+  );
+
+  return (
+    <div><style>{css}</style>
+      {showPix&&<PixModal service={form.service} settings={settings} onClose={()=>setShowPix(false)} onPaid={()=>{setShowPix(false);submit(true);}}/>}
+      <h2 style={{color:"#c8a97e",marginBottom:4,fontSize:22}}>Agendar Horário</h2>
+      <p style={{color:"#555",fontSize:13,marginBottom:24}}>{settings.barbearia}</p>
+
+      {/* Steps */}
+      <div style={{display:"flex",gap:6,marginBottom:28,position:"relative"}}>
+        <div style={{position:"absolute",top:14,left:"15%",right:"15%",height:1,background:"#222",zIndex:0}}/>
+        {["Serviço","Data & Hora","Seus dados"].map((s,i)=>(
+          <div key={i} style={{flex:1,textAlign:"center",zIndex:1}}>
+            <div style={{width:30,height:30,borderRadius:"50%",background:step>i+1?"#c8a97e":step===i+1?"#2a1f12":"#111",border:`2px solid ${step>=i+1?"#c8a97e":"#333"}`,color:step>i+1?"#000":step===i+1?"#c8a97e":"#444",fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 6px",fontSize:13}}>{step>i+1?"✓":i+1}</div>
+            <span style={{fontSize:10,color:step===i+1?"#c8a97e":"#555",fontWeight:step===i+1?700:400}}>{s}</span>
+          </div>
+        ))}
+      </div>
+
+      {step===1&&(
+        <div style={{animation:"fadeIn .3s ease"}}>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:24}}>
+            {activeServices.map(s=>(
+              <div key={s.id} onClick={()=>setForm(f=>({...f,service:s}))}
+                style={{background:form.service?.id===s.id?"#2a1f12":"#111",border:`2px solid ${form.service?.id===s.id?"#c8a97e":"#222"}`,borderRadius:14,padding:"16px 12px",cursor:"pointer",textAlign:"center",transition:"all .2s"}}>
+                <div style={{fontSize:28,marginBottom:6}}>{s.icon}</div>
+                <div style={{color:"#e5e5e5",fontSize:13,fontWeight:600,marginBottom:4}}>{s.name}</div>
+                <div style={{color:"#c8a97e",fontSize:15,fontWeight:700}}>R$ {s.price}</div>
+                <div style={{color:"#555",fontSize:11,marginTop:2}}>{s.duration} min</div>
+              </div>
+            ))}
+          </div>
+          <Btn onClick={()=>setStep(2)} disabled={!form.service} full>Próximo →</Btn>
+        </div>
+      )}
+
+      {step===2&&(
+        <div style={{animation:"fadeIn .3s ease"}}>
+          <div style={{display:"flex",flexDirection:"column",gap:16,marginBottom:20}}>
+            <Inp label="Data" type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value,time:""}))}/>
+            <div>
+              <label style={{color:"#888",fontSize:11,display:"block",marginBottom:8,letterSpacing:.5,textTransform:"uppercase"}}>Horário disponível</label>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:8}}>
+                {HOURS.map(h=>{
+                  const tk=booked.includes(h);
+                  return <div key={h} onClick={()=>!tk&&setForm(f=>({...f,time:h}))}
+                    style={{background:tk?"#0d0d0d":form.time===h?"#2a1f12":"#111",border:`1.5px solid ${tk?"#1a1a1a":form.time===h?"#c8a97e":"#222"}`,borderRadius:8,padding:"10px 4px",textAlign:"center",cursor:tk?"not-allowed":"pointer",color:tk?"#2a2a2a":form.time===h?"#c8a97e":"#888",fontSize:12,fontWeight:600,transition:"all .15s"}}>{h}</div>;
+                })}
+              </div>
+            </div>
+          </div>
+          <div style={{display:"flex",gap:10}}>
+            <Btn variant="ghost" onClick={()=>setStep(1)} style={{flex:1}}>← Voltar</Btn>
+            <Btn onClick={()=>setStep(3)} disabled={!form.time} style={{flex:2}}>Próximo →</Btn>
+          </div>
+        </div>
+      )}
+
+      {step===3&&(
+        <div style={{animation:"fadeIn .3s ease"}}>
+          <div style={{display:"flex",flexDirection:"column",gap:14,marginBottom:20}}>
+            <Inp label="Nome completo *" placeholder="Como você se chama?" value={form.name} onChange={e=>setForm(f=>({...f,name:e.target.value}))}/>
+            <Inp label="Telefone / WhatsApp *" placeholder="(11) 99999-0000" value={form.phone} onChange={e=>setForm(f=>({...f,phone:e.target.value}))}/>
+            <Sel label="Receber confirmação via" value={form.notify} onChange={e=>setForm(f=>({...f,notify:e.target.value}))}>
+              <option value="app">📱 App</option>
+              <option value="whatsapp">💬 WhatsApp</option>
+              <option value="telegram">✈️ Telegram</option>
+            </Sel>
+          </div>
+
+          {blocked&&<div style={{background:"#450a0a",border:"1px solid #7f1d1d",borderRadius:10,padding:14,marginBottom:16,color:"#fca5a5",fontSize:13,lineHeight:1.5}}>⛔ Este número está bloqueado. Entre em contato com o Studio diretamente.</div>}
+
+          <Card style={{marginBottom:16,background:"#111"}}>
+            <p style={{color:"#666",fontSize:11,marginBottom:10,letterSpacing:1,textTransform:"uppercase"}}>Resumo do agendamento</p>
+            {[["Serviço",form.service?.name],["Data",fmtDate(form.date)],["Horário",form.time],["Valor",`R$ ${form.service?.price},00`]].map(([k,v])=>(
+              <div key={k} style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+                <span style={{color:"#666",fontSize:13}}>{k}</span>
+                <span style={{color:["Horário","Valor"].includes(k)?"#c8a97e":"#ddd",fontSize:13,fontWeight:["Horário","Valor"].includes(k)?700:400}}>{v}</span>
+              </div>
+            ))}
+          </Card>
+
+          <div style={{display:"flex",gap:10,marginBottom:10}}>
+            <Btn variant="ghost" onClick={()=>setStep(2)} style={{flex:1}}>← Voltar</Btn>
+            <Btn onClick={()=>submit(false)} disabled={!form.name||!form.phone||saving} style={{flex:2}}>{saving?"Salvando...":"Confirmar ✓"}</Btn>
+          </div>
+          {settings.pixKey&&<Btn variant="ghost" onClick={()=>setShowPix(true)} disabled={!form.name||!form.phone} full style={{borderColor:"#22c55e44",color:"#22c55e"}}>💸 Pagar agora com PIX</Btn>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── TELA: PROMOÇÕES ─────────────────────────────────────────────
+function ScreenPromos({promos,isAdmin,onEdit}) {
+  const visible=promos.filter(p=>isAdmin||p.active);
+  return (
+    <div><style>{css}</style>
+      <h2 style={{color:"#c8a97e",marginBottom:4,fontSize:22}}>Promoções</h2>
+      <p style={{color:"#555",fontSize:13,marginBottom:24}}>Ofertas exclusivas do Studio</p>
+      {visible.length===0&&<Card style={{textAlign:"center",padding:32}}><p style={{color:"#555"}}>Nenhuma promoção ativa no momento</p></Card>}
+      <div style={{display:"flex",flexDirection:"column",gap:12}}>
+        {visible.map((p,i)=>(
+          <Card key={p.id||i} style={{borderLeft:`3px solid ${p.color}`,opacity:p.active?1:0.45}}>
+            <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
+              <Badge color={p.color}>{p.badge}</Badge>
+              {!p.active&&<Badge color="#333">INATIVA</Badge>}
+            </div>
+            <h3 style={{color:"#e5e5e5",marginBottom:6,fontSize:17,fontWeight:700}}>{p.title}</h3>
+            <p style={{color:"#777",fontSize:13,lineHeight:1.6}}>{p.desc}</p>
+            {isAdmin&&(
+              <div style={{marginTop:14,display:"flex",gap:8}}>
+                <Btn variant="soft" onClick={()=>onEdit(p,i,"edit")} style={{fontSize:12,padding:"7px 14px"}}>✏️ Editar</Btn>
+                <Btn variant={p.active?"danger":"success"} onClick={()=>onEdit(p,i,"toggle")} style={{fontSize:12,padding:"7px 14px"}}>{p.active?"Desativar":"Ativar"}</Btn>
+              </div>
+            )}
+          </Card>
+        ))}
+      </div>
+      {isAdmin&&<Btn onClick={()=>onEdit({title:"",desc:"",badge:"",color:"#c8a97e",active:true},-1,"new")} full style={{marginTop:18}}>+ Nova Promoção</Btn>}
+    </div>
+  );
+}
+
+// ─── TELA: FÓRUM ─────────────────────────────────────────────────
+function ScreenForum() {
+  const [posts,setPosts]=useState(null);
+  const [text,setText]=useState("");
+  const [author,setAuthor]=useState("");
+  const [phone,setPhone]=useState("");
+  const [sending,setSending]=useState(false);
+
+  useEffect(()=>{(async()=>{ const p=await DB.get("posts")||[]; setPosts([...p].reverse()); })();},[]);
+
+  const publish=async()=>{
+    if(!text.trim()||!author.trim()||!phone.trim())return;
+    setSending(true);
+    const posts=await DB.get("posts")||[];
+    const np={id:Date.now().toString(),author,phone,avatar:author[0].toUpperCase(),text,likes:0,createdAt:new Date().toISOString()};
+    await DB.set("posts",[...posts,np]);
+    const all=await DB.get("posts")||[]; setPosts([...all].reverse());
+    setText(""); setSending(false);
+  };
+
+  const like=async(post)=>{
+    const all=await DB.get("posts")||[];
+    await DB.set("posts",all.map(p=>p.id===post.id?{...p,likes:(p.likes||0)+1}:p));
+    const updated=await DB.get("posts")||[]; setPosts([...updated].reverse());
+  };
+
+  return (
+    <div><style>{css}</style>
+      <h2 style={{color:"#c8a97e",marginBottom:4,fontSize:22}}>Comunidade</h2>
+      <p style={{color:"#555",fontSize:13,marginBottom:20}}>Compartilhe seu estilo e experiências</p>
+      <Card style={{marginBottom:20}}>
+        <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:12}}>
+          <Inp placeholder="Seu nome" value={author} onChange={e=>setAuthor(e.target.value)}/>
+          <Inp placeholder="Seu telefone (não aparece publicamente)" value={phone} onChange={e=>setPhone(e.target.value)}/>
+        </div>
+        <textarea value={text} onChange={e=>setText(e.target.value)} placeholder="Compartilhe seu look, dica ou experiência..."
+          style={{background:"transparent",border:"none",color:"#e5e5e5",fontSize:14,fontFamily:"inherit",width:"100%",resize:"none",outline:"none",minHeight:70,boxSizing:"border-box"}}/>
+        <div style={{borderTop:"1px solid #252525",paddingTop:12,display:"flex",justifyContent:"flex-end"}}>
+          <Btn onClick={publish} disabled={!text.trim()||!author.trim()||!phone.trim()||sending} style={{padding:"8px 20px",fontSize:13}}>{sending?"Publicando...":"Publicar"}</Btn>
+        </div>
+      </Card>
+      {posts===null?<Loader/>:posts.length===0?<p style={{color:"#444",textAlign:"center",padding:20}}>Seja o primeiro a postar!</p>:posts.map(p=>(
+        <Card key={p.id} style={{marginBottom:12}}>
+          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10}}>
+            <div style={{width:40,height:40,borderRadius:"50%",background:"linear-gradient(135deg,#c8a97e,#7a5c30)",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:16,color:"#0d0d0d",flexShrink:0}}>{p.avatar}</div>
+            <div><div style={{color:"#e5e5e5",fontWeight:600,fontSize:14}}>{p.author}</div><div style={{color:"#444",fontSize:12}}>{new Date(p.createdAt).toLocaleDateString("pt-BR")}</div></div>
+          </div>
+          <p style={{color:"#ccc",fontSize:14,lineHeight:1.65,marginBottom:12}}>{p.text}</p>
+          <Btn variant="ghost" onClick={()=>like(p)} style={{fontSize:12,padding:"6px 14px"}}>❤️ {p.likes||0}</Btn>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+// ─── TELA: REDES SOCIAIS ─────────────────────────────────────────
+function ScreenSocial({settings}) {
+  const links=[
+    {key:"instagram",icon:"📸",label:"Instagram",prefix:"https://instagram.com/"},
+    {key:"whatsapp",icon:"💬",label:"WhatsApp",prefix:"https://wa.me/55"},
+    {key:"tiktok",icon:"🎵",label:"TikTok",prefix:"https://tiktok.com/@"},
+    {key:"facebook",icon:"👥",label:"Facebook",prefix:"https://facebook.com/"},
+  ].filter(l=>settings[l.key]);
+  return (
+    <div><style>{css}</style>
+      <h2 style={{color:"#c8a97e",marginBottom:4,fontSize:22}}>Conecte-se</h2>
+      <p style={{color:"#555",fontSize:13,marginBottom:24}}>Siga o Studio nas redes sociais</p>
+      {links.length===0?(
+        <Card style={{textAlign:"center",padding:40}}><div style={{fontSize:44,marginBottom:12}}>📱</div><p style={{color:"#555",fontSize:14}}>Redes sociais não configuradas</p><p style={{color:"#444",fontSize:12,marginTop:6}}>ADM → Configurações → Redes Sociais</p></Card>
+      ):(
+        <div style={{display:"flex",flexDirection:"column",gap:10}}>
+          {links.map(l=>(
+            <a key={l.key} href={`${l.prefix}${settings[l.key].replace(/^@/,"")}`} target="_blank" rel="noopener noreferrer" style={{textDecoration:"none"}}>
+              <Card style={{display:"flex",alignItems:"center",gap:14,cursor:"pointer"}}>
+                <span style={{fontSize:34}}>{l.icon}</span>
+                <div><div style={{color:"#e5e5e5",fontWeight:600,fontSize:15}}>{l.label}</div><div style={{color:"#c8a97e",fontSize:13}}>@{settings[l.key].replace(/^@/,"")}</div></div>
+                <span style={{marginLeft:"auto",color:"#444",fontSize:18}}>→</span>
+              </Card>
+            </a>
+          ))}
+        </div>
+      )}
+      <Card style={{marginTop:18,background:"#111",textAlign:"center",padding:"16px 20px"}}>
+        <p style={{color:"#888",fontSize:14,fontWeight:600}}>{settings.barbearia}</p>
+        <p style={{color:"#555",fontSize:12,marginTop:4}}>📍 {settings.endereco}</p>
+      </Card>
+    </div>
+  );
+}
+
+// ─── PAINEL ADM ───────────────────────────────────────────────────
+function ScreenAdmin({settings,setSettings,services,setServices,promos,setPromos,setAdminMode}) {
+  const [tab,setTab]=useState("agenda");
+  const [apts,setApts]=useState(null);
+  const [clients,setClients]=useState(null);
+  const [editPromo,setEditPromo]=useState(null);
+  const [editPromoIdx,setEditPromoIdx]=useState(-1);
+  const [editSvc,setEditSvc]=useState(null);
+  const [loc,setLoc]=useState({...settings});
+  const [savingCfg,setSavingCfg]=useState(false);
+  const [testTg,setTestTg]=useState("");
+
+  useEffect(()=>{ loadData(); },[]);
+
+  const loadData=async()=>{
+    const [a,c]=await Promise.all([DB.get("appointments")||[],DB.get("clients")||[]]);
+    setApts([...(a||[])].sort((x,y)=>x.date===y.date?x.time.localeCompare(y.time):x.date.localeCompare(y.date)));
+    setClients([...(c||[])].reverse());
+  };
+
+  const todayApts=(apts||[]).filter(a=>a.date===today());
+  const upcomingApts=(apts||[]).filter(a=>a.date>today()).slice(0,10);
+
+  const cleanOld=async()=>{
+    const cut=ago90(); let n=0;
+    for(const col of["appointments","posts"]){
+      const all=await DB.get(col)||[];
+      const keep=all.filter(x=>x.createdAt>=cut); n+=all.length-keep.length;
+      await DB.set(col,keep);
+    }
+    alert(`✅ ${n} registros com +90 dias removidos!`); loadData();
+  };
+
+  const toggleBlock=async(c)=>{
+    const all=await DB.get("clients")||[];
+    await DB.set("clients",all.map(x=>x.id===c.id?{...x,blocked:!x.blocked}:x));
+    setClients(prev=>prev.map(x=>x.id===c.id?{...x,blocked:!x.blocked}:x));
+  };
+
+  const cancelApt=async(id)=>{
+    const all=await DB.get("appointments")||[];
+    await DB.set("appointments",all.filter(x=>x.id!==id));
+    setApts(prev=>prev.filter(x=>x.id!==id));
+  };
+
+  const handlePromoEdit=(p,i,action)=>{
+    if(action==="toggle"){ setPromos(prev=>prev.map((x,idx)=>idx===i?{...x,active:!x.active}:x)); }
+    else{ setEditPromo({...p}); setEditPromoIdx(i); }
+  };
+
+  const savePromo=()=>{
+    if(editPromoIdx===-1) setPromos(prev=>[...prev,{...editPromo,id:"p"+Date.now()}]);
+    else setPromos(prev=>prev.map((x,i)=>i===editPromoIdx?editPromo:x));
+    setEditPromo(null); setEditPromoIdx(-1);
+  };
+
+  const saveSvc=()=>{
+    if(!editSvc)return;
+    if(editSvc._new) setServices(prev=>[...prev,{...editSvc,id:"s"+Date.now(),_new:undefined}]);
+    else setServices(prev=>prev.map(s=>s.id===editSvc.id?editSvc:s));
+    setEditSvc(null);
+  };
+
+  const saveSettings=async()=>{
+    setSavingCfg(true);
+    await DB.set("settings",loc);
+    setSettings(loc); setSavingCfg(false);
+    alert("✅ Configurações salvas!");
+  };
+
+  const testTelegram=async()=>{
+    const ok=await sendTelegram(loc.telegramToken,loc.telegramChatId,"✅ Teste do Studio Paulo Barbier — Notificações funcionando!");
+    setTestTg(ok?"✅ Mensagem enviada! Verifique o Telegram.":"❌ Falhou. Verifique o Token e Chat ID.");
+  };
+
+  const TABS=[["agenda","📅","Agenda"],["clientes","👥","Clientes"],["servicos","✂️","Serviços"],["promos","🏷️","Promos"],["config","⚙️","Config"]];
+
+  return (
+    <div><style>{css}</style>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:20}}>
+        <h2 style={{color:"#c8a97e",fontSize:22}}>Painel ADM</h2>
+        <Btn variant="ghost" onClick={()=>setAdminMode(false)} style={{fontSize:12,padding:"7px 14px"}}>← Sair</Btn>
+      </div>
+
+      {/* Stats */}
+      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,marginBottom:20}}>
+        {[["📅",(apts||[]).length,"Agendamentos"],["👥",(clients||[]).length,"Clientes"],["⛔",(clients||[]).filter(c=>c.blocked).length,"Bloqueados"]].map(([icon,val,label])=>(
+          <Card key={label} style={{textAlign:"center",padding:"12px 6px"}}><div style={{fontSize:20}}>{icon}</div><div style={{color:"#c8a97e",fontWeight:700,fontSize:22}}>{val}</div><div style={{color:"#555",fontSize:10,marginTop:2}}>{label}</div></Card>
+        ))}
+      </div>
+
+      {/* Tabs */}
+      <div style={{display:"flex",gap:3,marginBottom:20,background:"#111",borderRadius:12,padding:4,overflowX:"auto"}}>
+        {TABS.map(([k,icon,label])=>(
+          <button key={k} onClick={()=>setTab(k)} style={{flex:1,minWidth:56,padding:"8px 4px",borderRadius:8,border:"none",background:tab===k?"#2a1f12":"transparent",color:tab===k?"#c8a97e":"#555",fontWeight:600,cursor:"pointer",fontSize:10,fontFamily:"inherit",display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
+            <span style={{fontSize:16}}>{icon}</span>{label}
+          </button>
+        ))}
+      </div>
+
+      {/* AGENDA DO DIA */}
+      {tab==="agenda"&&(
+        <div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
+            <div><p style={{color:"#e5e5e5",fontWeight:700,fontSize:15}}>Hoje</p><p style={{color:"#555",fontSize:12}}>{todayLabel()}</p></div>
+            <Btn variant="danger" onClick={cleanOld} style={{fontSize:11,padding:"6px 12px"}}>🗑️ +90 dias</Btn>
+          </div>
+
+          {apts===null?<Loader/>:<>
+            {todayApts.length===0?
+              <Card style={{textAlign:"center",padding:24,marginBottom:16}}><p style={{color:"#444",fontSize:14}}>Nenhum agendamento hoje</p></Card>:
+              <div style={{marginBottom:20}}>
+                {todayApts.map(a=>(
+                  <div key={a.id} style={{display:"flex",gap:12,marginBottom:10,alignItems:"stretch"}}>
+                    <div style={{width:52,textAlign:"center",flexShrink:0}}>
+                      <div style={{color:"#c8a97e",fontWeight:700,fontSize:16,lineHeight:1}}>{a.time}</div>
+                      <div style={{width:1,background:"#2a2a2a",height:"calc(100% - 24px)",margin:"4px auto 0"}}/>
+                    </div>
+                    <Card style={{flex:1,padding:"12px 14px"}}>
+                      <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
+                        <div>
+                          <div style={{color:"#e5e5e5",fontWeight:600,fontSize:14}}>{a.client}</div>
+                          <div style={{color:"#888",fontSize:12,marginTop:2}}>{a.service}</div>
+                          <div style={{color:"#555",fontSize:12,marginTop:2}}>📱 {a.phone}</div>
+                          {a.pagou&&<div style={{marginTop:4}}><Badge color="#22c55e">PIX ✓</Badge></div>}
+                        </div>
+                        <Btn variant="danger" onClick={()=>cancelApt(a.id)} style={{fontSize:10,padding:"4px 8px"}}>✕</Btn>
+                      </div>
+                    </Card>
+                  </div>
+                ))}
+              </div>
+            }
+
+            {upcomingApts.length>0&&<>
+              <p style={{color:"#888",fontSize:12,marginBottom:10,letterSpacing:1,textTransform:"uppercase"}}>Próximos dias</p>
+              {upcomingApts.map(a=>(
+                <Card key={a.id} style={{marginBottom:8,padding:"12px 16px"}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                    <div>
+                      <div style={{display:"flex",alignItems:"center",gap:8}}><span style={{color:"#c8a97e",fontSize:13,fontWeight:700}}>{fmtDate(a.date)} {a.time}</span>{a.pagou&&<Badge color="#22c55e">PIX</Badge>}</div>
+                      <div style={{color:"#e5e5e5",fontSize:14,fontWeight:600,marginTop:2}}>{a.client}</div>
+                      <div style={{color:"#666",fontSize:12}}>{a.service} • {a.phone}</div>
+                    </div>
+                    <Btn variant="danger" onClick={()=>cancelApt(a.id)} style={{fontSize:10,padding:"4px 8px"}}>✕</Btn>
+                  </div>
+                </Card>
+              ))}
+            </>}
+          </>}
+        </div>
+      )}
+
+      {/* CLIENTES */}
+      {tab==="clientes"&&(
+        <div>
+          {clients===null?<Loader/>:clients.length===0?<Card style={{textAlign:"center",padding:28}}><p style={{color:"#444"}}>Nenhum cliente cadastrado ainda</p></Card>:clients.map(c=>(
+            <Card key={c.id} style={{marginBottom:10}}>
+              <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                <div>
+                  <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                    <span style={{color:"#e5e5e5",fontWeight:600}}>{c.name}</span>
+                    {c.blocked&&<Badge color="#7f1d1d">BLOQUEADO</Badge>}
+                    {(c.noShows||0)>=2&&!c.blocked&&<Badge color="#92400e">⚠️ {c.noShows} faltas</Badge>}
+                  </div>
+                  <div style={{color:"#555",fontSize:13,marginTop:3}}>📱 {c.phone}</div>
+                </div>
+                <Btn variant={c.blocked?"success":"danger"} onClick={()=>toggleBlock(c)} style={{fontSize:11,padding:"7px 12px"}}>{c.blocked?"Desbloquear":"Bloquear"}</Btn>
+              </div>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* SERVIÇOS */}
+      {tab==="servicos"&&(
+        editSvc?(
+          <Card>
+            <h3 style={{color:"#c8a97e",marginBottom:16}}>{editSvc._new?"Novo":"Editar"} Serviço</h3>
+            <div style={{display:"flex",flexDirection:"column",gap:12}}>
+              <Inp label="Nome" placeholder="Ex: Corte Tradicional" value={editSvc.name} onChange={e=>setEditSvc(s=>({...s,name:e.target.value}))}/>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                <Inp label="Preço (R$)" type="number" placeholder="40" value={editSvc.price} onChange={e=>setEditSvc(s=>({...s,price:parseFloat(e.target.value)||0}))}/>
+                <Inp label="Duração (min)" type="number" placeholder="30" value={editSvc.duration} onChange={e=>setEditSvc(s=>({...s,duration:parseInt(e.target.value)||0}))}/>
+              </div>
+              <Inp label="Ícone (emoji)" placeholder="✂️" value={editSvc.icon} onChange={e=>setEditSvc(s=>({...s,icon:e.target.value}))}/>
+            </div>
+            <div style={{display:"flex",gap:10,marginTop:16}}>
+              <Btn variant="ghost" onClick={()=>setEditSvc(null)} style={{flex:1}}>Cancelar</Btn>
+              <Btn onClick={saveSvc} style={{flex:2}}>Salvar</Btn>
+            </div>
+          </Card>
+        ):(
+          <div>
+            <div style={{display:"flex",flexDirection:"column",gap:10}}>
+              {services.map(s=>(
+                <Card key={s.id} style={{opacity:s.active?1:0.5}}>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:12}}>
+                      <span style={{fontSize:26}}>{s.icon}</span>
+                      <div>
+                        <div style={{color:"#e5e5e5",fontWeight:600,fontSize:14}}>{s.name}</div>
+                        <div style={{color:"#c8a97e",fontSize:14,fontWeight:700}}>R$ {s.price} <span style={{color:"#555",fontSize:12,fontWeight:400}}>• {s.duration}min</span></div>
+                      </div>
+                    </div>
+                    <div style={{display:"flex",gap:6}}>
+                      <Btn variant="soft" onClick={()=>setEditSvc({...s})} style={{fontSize:11,padding:"6px 10px"}}>✏️</Btn>
+                      <Btn variant={s.active?"danger":"success"} onClick={()=>setServices(prev=>prev.map(x=>x.id===s.id?{...x,active:!x.active}:x))} style={{fontSize:11,padding:"6px 10px"}}>{s.active?"Off":"On"}</Btn>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+            <Btn onClick={()=>setEditSvc({name:"",price:40,duration:30,icon:"✂️",active:true,_new:true})} full style={{marginTop:14}}>+ Novo Serviço</Btn>
+          </div>
+        )
+      )}
+
+      {/* PROMOÇÕES */}
+      {tab==="promos"&&(
+        editPromo?(
+          <Card>
+            <h3 style={{color:"#c8a97e",marginBottom:16}}>{editPromoIdx===-1?"Nova":"Editar"} Promoção</h3>
+            <div style={{display:"flex",flexDirection:"column",gap:12}}>
+              <Inp label="Título" placeholder="Ex: Segunda Econômica" value={editPromo.title} onChange={e=>setEditPromo(p=>({...p,title:e.target.value}))}/>
+              <Inp label="Descrição" placeholder="Detalhes da promoção" value={editPromo.desc} onChange={e=>setEditPromo(p=>({...p,desc:e.target.value}))}/>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+                <Inp label="Badge" placeholder="SEG" value={editPromo.badge} onChange={e=>setEditPromo(p=>({...p,badge:e.target.value}))}/>
+                <Inp label="Cor hex" placeholder="#22c55e" value={editPromo.color} onChange={e=>setEditPromo(p=>({...p,color:e.target.value}))}/>
+              </div>
+              <div style={{height:8,borderRadius:4,background:editPromo.color,opacity:.7}}/>
+            </div>
+            <div style={{display:"flex",gap:10,marginTop:16}}>
+              <Btn variant="ghost" onClick={()=>{setEditPromo(null);setEditPromoIdx(-1);}} style={{flex:1}}>Cancelar</Btn>
+              <Btn onClick={savePromo} style={{flex:2}}>Salvar</Btn>
+            </div>
+          </Card>
+        ):(
+          <ScreenPromos promos={promos} isAdmin={true} onEdit={handlePromoEdit}/>
+        )
+      )}
+
+      {/* CONFIGURAÇÕES */}
+      {tab==="config"&&(
+        <div style={{display:"flex",flexDirection:"column",gap:14}}>
+          <Card>
+            <Section title="🏪 Barbearia">
+              <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                <Inp label="Nome" placeholder="Studio Paulo Barbier" value={loc.barbearia} onChange={e=>setLoc(s=>({...s,barbearia:e.target.value}))}/>
+                <Inp label="Endereço" placeholder="São Paulo - SP" value={loc.endereco} onChange={e=>setLoc(s=>({...s,endereco:e.target.value}))}/>
+              </div>
+            </Section>
+          </Card>
+
+          <Card>
+            <Section title="🔐 Segurança ADM">
+              <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                <Inp label="Senha principal" type="password" placeholder="Senha de acesso" value={loc.adminPass} onChange={e=>setLoc(s=>({...s,adminPass:e.target.value}))}/>
+                <Inp label="Código de emergência" type="password" placeholder="Para recuperar acesso" value={loc.emergencyCode} onChange={e=>setLoc(s=>({...s,emergencyCode:e.target.value}))}/>
+                <div style={{background:"#111",borderRadius:8,padding:10,fontSize:12,color:"#666",lineHeight:1.6}}>💡 Se esquecer a senha, use o código de emergência na tela de login para redefinir.</div>
+              </div>
+            </Section>
+          </Card>
+
+          <Card>
+            <Section title="💸 PIX">
+              <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                <Inp label="Chave PIX" placeholder="Telefone, CPF, email..." value={loc.pixKey} onChange={e=>setLoc(s=>({...s,pixKey:e.target.value}))}/>
+                <Inp label="Nome do favorecido" placeholder="Paulo Barbier" value={loc.pixName} onChange={e=>setLoc(s=>({...s,pixName:e.target.value}))}/>
+                <Inp label="Banco" placeholder="PicPay, Nubank..." value={loc.pixBank} onChange={e=>setLoc(s=>({...s,pixBank:e.target.value}))}/>
+              </div>
+            </Section>
+          </Card>
+
+          <Card>
+            <Section title="✈️ Telegram (notificações)">
+              <div style={{background:"#0a1520",border:"1px solid #1a3a5a",borderRadius:10,padding:12,marginBottom:12,fontSize:12,color:"#7eb8f0",lineHeight:1.8}}>
+                <strong>Como configurar:</strong><br/>
+                1. Abra o Telegram → pesquise <strong>@BotFather</strong><br/>
+                2. Digite <strong>/newbot</strong> → siga as instruções<br/>
+                3. Copie o <strong>Token</strong> gerado<br/>
+                4. Abra seu novo Bot → clique Start<br/>
+                5. Acesse: api.telegram.org/bot<strong>[TOKEN]</strong>/getUpdates<br/>
+                6. Copie o <strong>id</strong> que aparece em "chat"<br/>
+                7. Cole os dados abaixo e salve
+              </div>
+              <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                <Inp label="Token do Bot" placeholder="123456:AAF_xKj8..." value={loc.telegramToken} onChange={e=>setLoc(s=>({...s,telegramToken:e.target.value}))}/>
+                <Inp label="Chat ID" placeholder="Ex: 987654321" value={loc.telegramChatId} onChange={e=>setLoc(s=>({...s,telegramChatId:e.target.value}))}/>
+              </div>
+              {loc.telegramToken&&loc.telegramChatId&&(
+                <div style={{marginTop:10}}>
+                  <Btn variant="soft" onClick={testTelegram} full style={{marginBottom:6}}>📨 Enviar mensagem de teste</Btn>
+                  {testTg&&<p style={{color:testTg.startsWith("✅")?"#86efac":"#fca5a5",fontSize:12,textAlign:"center",marginTop:4}}>{testTg}</p>}
+                </div>
+              )}
+            </Section>
+          </Card>
+
+          <Card>
+            <Section title="📱 Redes Sociais">
+              <div style={{display:"flex",flexDirection:"column",gap:10}}>
+                <Inp label="Instagram" placeholder="@usuario" value={loc.instagram} onChange={e=>setLoc(s=>({...s,instagram:e.target.value}))}/>
+                <Inp label="WhatsApp" placeholder="11999990000 (só números)" value={loc.whatsapp} onChange={e=>setLoc(s=>({...s,whatsapp:e.target.value}))}/>
+                <Inp label="TikTok" placeholder="@usuario" value={loc.tiktok} onChange={e=>setLoc(s=>({...s,tiktok:e.target.value}))}/>
+                <Inp label="Facebook" placeholder="usuario ou página" value={loc.facebook} onChange={e=>setLoc(s=>({...s,facebook:e.target.value}))}/>
+              </div>
+            </Section>
+          </Card>
+
+          <Btn onClick={saveSettings} disabled={savingCfg} full style={{marginBottom:4}}>{savingCfg?"Salvando...":"💾 Salvar todas as configurações"}</Btn>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── LOGIN ADM ────────────────────────────────────────────────────
+function LoginModal({settings,onSuccess,onClose}) {
+  const [pass,setPass]=useState("");
+  const [mode,setMode]=useState("login"); // login | recovery
+  const [code,setCode]=useState("");
+  const [newPass,setNewPass]=useState("");
+  const [err,setErr]=useState("");
+
+  const tryLogin=()=>{
+    if(pass===settings.adminPass){ onSuccess(); }
+    else{ setErr("Senha incorreta"); }
+  };
+
+  const tryRecover=async()=>{
+    if(code!==settings.emergencyCode){ setErr("Código de emergência incorreto"); return; }
+    if(newPass.length<4){ setErr("Nova senha deve ter ao menos 4 caracteres"); return; }
+    const newSettings={...settings,adminPass:newPass};
+    await DB.set("settings",newSettings);
+    setSettings && setSettings(newSettings);
+    alert("✅ Senha redefinida! Faça login com a nova senha.");
+    setMode("login"); setCode(""); setNewPass(""); setErr("");
+  };
+
+  return (
+    <div style={{position:"fixed",inset:0,background:"#000c",zIndex:200,display:"flex",alignItems:"center",justifyContent:"center",padding:16}}>
+      <style>{css}</style>
+      <Card style={{width:"100%",maxWidth:320,background:"#161616",animation:"fadeIn .3s ease"}}>
+        {mode==="login"?(
+          <>
+            <h3 style={{color:"#c8a97e",marginBottom:4,textAlign:"center",fontSize:18}}>🔐 Área ADM</h3>
+            <p style={{color:"#444",fontSize:12,textAlign:"center",marginBottom:20}}>Studio Paulo Barbier</p>
+            <Inp label="Senha" type="password" placeholder="Digite sua senha" value={pass} onChange={e=>{setPass(e.target.value);setErr("");}}/>
+            {err&&<p style={{color:"#fca5a5",fontSize:12,marginTop:6}}>{err}</p>}
+            <div style={{display:"flex",gap:8,marginTop:14}}>
+              <Btn variant="ghost" onClick={onClose} style={{flex:1}}>Cancelar</Btn>
+              <Btn onClick={tryLogin} style={{flex:2}}>Entrar</Btn>
+            </div>
+            <button onClick={()=>{setMode("recovery");setErr("");}} style={{background:"none",border:"none",color:"#555",fontSize:12,cursor:"pointer",width:"100%",marginTop:12,textDecoration:"underline"}}>Esqueci minha senha</button>
+          </>
+        ):(
+          <>
+            <h3 style={{color:"#c8a97e",marginBottom:4,textAlign:"center",fontSize:17}}>🔑 Recuperar Acesso</h3>
+            <p style={{color:"#555",fontSize:12,textAlign:"center",marginBottom:20,lineHeight:1.5}}>Use seu código de emergência para redefinir a senha</p>
+            <div style={{display:"flex",flexDirection:"column",gap:12}}>
+              <Inp label="Código de emergência" type="password" placeholder="Seu código de recuperação" value={code} onChange={e=>{setCode(e.target.value);setErr("");}}/>
+              <Inp label="Nova senha" type="password" placeholder="Mínimo 4 caracteres" value={newPass} onChange={e=>{setNewPass(e.target.value);setErr("");}}/>
+            </div>
+            {err&&<p style={{color:"#fca5a5",fontSize:12,marginTop:6}}>{err}</p>}
+            <div style={{display:"flex",gap:8,marginTop:14}}>
+              <Btn variant="ghost" onClick={()=>{setMode("login");setErr("");}} style={{flex:1}}>← Voltar</Btn>
+              <Btn onClick={tryRecover} style={{flex:2}}>Redefinir</Btn>
+            </div>
+          </>
+        )}
+      </Card>
+    </div>
+  );
+}
+
+// ─── APP PRINCIPAL ────────────────────────────────────────────────
+function App() {
+  const [tab,setTab]=useState("agendar");
+  const [adminMode,setAdminMode]=useState(false);
+  const [showLogin,setShowLogin]=useState(false);
+  const [settings,setSettings]=useState(DEF_SETTINGS);
+  const [services,setServices]=useState(DEF_SERVICES);
+  const [promos,setPromos]=useState(DEF_PROMOS);
+  const [booting,setBooting]=useState(true);
+
+  useEffect(()=>{
+    (async()=>{
+      const [s,svc,prm]=await Promise.all([DB.get("settings"),DB.get("services"),DB.get("promos")]);
+      if(s) setSettings({...DEF_SETTINGS,...s});
+      if(svc) setServices(svc);
+      if(prm) setPromos(prm);
+      setBooting(false);
+    })();
+  },[]);
+
+  // Persiste serviços e promos
+  useEffect(()=>{ if(!booting) DB.set("services",services); },[services,booting]);
+  useEffect(()=>{ if(!booting) DB.set("promos",promos); },[promos,booting]);
+
+  const NAV=[
+    {id:"agendar",icon:"✂️",label:"Agendar"},
+    {id:"promocoes",icon:"🏷️",label:"Promoções"},
+    {id:"forum",icon:"💬",label:"Comunidade"},
+    {id:"social",icon:"📱",label:"Redes"},
+    {id:adminMode?"admin":"adm_login",icon:"🔐",label:adminMode?"ADM ●":"ADM"},
+  ];
+
+  if(booting) return (
+    <div style={{background:"#0d0d0d",minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}>
+      <style>{css}</style>
+      <div style={{fontSize:60}}>💈</div>
+      <Loader/>
+      <p style={{color:"#333",fontSize:13}}>Carregando...</p>
+    </div>
+  );
+
+  return (
+    <div style={{fontFamily:"'Georgia','Times New Roman',serif",background:"#0d0d0d",minHeight:"100vh",color:"#e5e5e5",maxWidth:430,margin:"0 auto",display:"flex",flexDirection:"column"}}>
+      <style>{css}</style>
+
+      {showLogin&&<LoginModal settings={settings} setSettings={setSettings} onSuccess={()=>{setAdminMode(true);setShowLogin(false);setTab("admin");}} onClose={()=>setShowLogin(false)}/>}
+
+      {/* Header */}
+      <div style={{background:"linear-gradient(170deg,#1c1408 0%,#0d0d0d 100%)",borderBottom:"1px solid #2a1f0e",padding:"18px 20px 16px",textAlign:"center",position:"relative"}}>
+        <div style={{fontSize:10,letterSpacing:5,color:"#7a5c30",marginBottom:3,textTransform:"uppercase"}}>Studio</div>
+        <div style={{fontSize:24,fontWeight:700,color:"#c8a97e",letterSpacing:2}}>{settings.barbearia}</div>
+        <div style={{fontSize:10,color:"#444",letterSpacing:3,marginTop:3,textTransform:"uppercase"}}>{settings.endereco}</div>
+      </div>
+
+      {/* Content */}
+      <div style={{flex:1,padding:"24px 16px 100px",overflowY:"auto"}}>
+        {tab==="agendar"&&<ScreenAgendar settings={settings} services={services}/>}
+        {tab==="promocoes"&&<ScreenPromos promos={promos} isAdmin={false} onEdit={()=>{}}/>}
+        {tab==="forum"&&<ScreenForum/>}
+        {tab==="social"&&<ScreenSocial settings={settings}/>}
+        {tab==="admin"&&adminMode&&<ScreenAdmin settings={settings} setSettings={setSettings} services={services} setServices={setServices} promos={promos} setPromos={setPromos} setAdminMode={v=>{setAdminMode(v);if(!v)setTab("agendar");}}/>}
+      </div>
+
+      {/* Bottom Nav */}
+      <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:430,background:"#0f0f0f",borderTop:"1px solid #1f1f1f",display:"flex",zIndex:50,paddingBottom:"env(safe-area-inset-bottom)"}}>
+        {NAV.map(n=>{
+          const active=tab===n.id;
+          return (
+            <button key={n.id} onClick={()=>{if(n.id==="adm_login"){setShowLogin(true);return;}setTab(n.id);}}
+              style={{flex:1,padding:"12px 2px 10px",background:"transparent",border:"none",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,fontFamily:"inherit",position:"relative"}}>
+              {active&&<div style={{position:"absolute",top:0,left:"20%",right:"20%",height:2,background:"#c8a97e",borderRadius:"0 0 2px 2px"}}/>}
+              <span style={{fontSize:18}}>{n.icon}</span>
+              <span style={{fontSize:9,fontWeight:600,letterSpacing:.3,color:active?"#c8a97e":"#444"}}>{n.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(React.createElement(App));
+  </script>
+</body>
+</html>

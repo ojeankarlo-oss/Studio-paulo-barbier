@@ -7,11 +7,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes"/>
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
   <title>Studio Paulo Barbier</title>
-  <style>
-    *{margin:0;padding:0;box-sizing:border-box;}
-    body{background:#0d0d0d;font-family:Georgia,serif;-webkit-tap-highlight-color:transparent;color:#e5e5e5;}
-    input,select,textarea,button{-webkit-appearance:none;appearance:none;font-family:inherit;}
-  </style>
+  <style>*{margin:0;padding:0;box-sizing:border-box;}body{background:#0d0d0d;-webkit-tap-highlight-color:transparent;}input,select,textarea,button{-webkit-appearance:none;appearance:none;font-family:inherit;}</style>
 </head>
 <body>
   <div id="root"></div>
@@ -51,7 +47,7 @@ var DB = {
         while (1) switch (_context.p = _context.n) {
           case 0:
             _context.p = 0;
-            v = localStorage.getItem("pb_" + k);
+            v = localStorage.getItem('pb_' + k);
             return _context.a(2, v ? JSON.parse(v) : null);
           case 1:
             _context.p = 1;
@@ -71,7 +67,7 @@ var DB = {
         while (1) switch (_context2.n) {
           case 0:
             try {
-              localStorage.setItem("pb_" + k, JSON.stringify(v));
+              localStorage.setItem('pb_' + k, JSON.stringify(v));
             } catch (e) {
               console.error(e);
             }
@@ -86,8 +82,6 @@ var DB = {
     return set;
   }()
 };
-
-// ─── DEFAULTS ─────────────────────────────────────────────────────
 var DEF_SERVICES = [{
   id: "s1",
   name: "Corte Tradicional",
@@ -172,12 +166,8 @@ var HOURS = ["09:00", "09:30", "10:00", "10:30", "11:00", "11:30", "13:00", "13:
 var today = function today() {
   return new Date().toISOString().split("T")[0];
 };
-var ago90 = function ago90() {
-  var d = new Date();
-  d.setDate(d.getDate() - 90);
-  return d.toISOString();
-};
 var fmtDate = function fmtDate(d) {
+  if (!d) return "";
   var _d$split = d.split("-"),
     _d$split2 = _slicedToArray(_d$split, 3),
     y = _d$split2[0],
@@ -186,15 +176,22 @@ var fmtDate = function fmtDate(d) {
   return "".concat(day, "/").concat(m, "/").concat(y);
 };
 var todayLabel = function todayLabel() {
-  var d = new Date();
-  return d.toLocaleDateString("pt-BR", {
+  return new Date().toLocaleDateString("pt-BR", {
     weekday: "long",
     day: "2-digit",
     month: "long"
   });
 };
-
-// ─── TELEGRAM ─────────────────────────────────────────────────────
+var toBase64 = function toBase64(file) {
+  return new Promise(function (res, rej) {
+    var r = new FileReader();
+    r.onload = function () {
+      return res(r.result);
+    };
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+};
 var sendTelegram = /*#__PURE__*/function () {
   var _ref = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee3(token, chatId, msg) {
     var r, _t2;
@@ -234,9 +231,7 @@ var sendTelegram = /*#__PURE__*/function () {
     return _ref.apply(this, arguments);
   };
 }();
-
-// ─── BASE COMPONENTS ──────────────────────────────────────────────
-var css = "@keyframes spin{to{transform:rotate(360deg)}} @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}";
+var css = "@keyframes spin{to{transform:rotate(360deg)}}@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}";
 var Card = function Card(_ref2) {
   var children = _ref2.children,
     _ref2$style = _ref2.style,
@@ -246,8 +241,7 @@ var Card = function Card(_ref2) {
       background: "#1a1a1a",
       borderRadius: 14,
       padding: "18px 20px",
-      border: "1px solid #2a2a2a",
-      animation: "fadeIn .3s ease"
+      border: "1px solid #2a2a2a"
     }, style)
   }, children);
 };
@@ -268,7 +262,7 @@ var Badge = function Badge(_ref3) {
   }, children);
 };
 var Loader = function Loader() {
-  return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("style", null, css), /*#__PURE__*/React.createElement("div", {
+  return /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       justifyContent: "center",
@@ -283,7 +277,7 @@ var Loader = function Loader() {
       borderRadius: "50%",
       animation: "spin 1s linear infinite"
     }
-  })));
+  }));
 };
 var Btn = function Btn(_ref4) {
   var children = _ref4.children,
@@ -423,8 +417,6 @@ var Section = function Section(_ref7) {
     }
   }, title), children);
 };
-
-// ─── PIX MODAL ────────────────────────────────────────────────────
 function PixModal(_ref8) {
   var service = _ref8.service,
     settings = _ref8.settings,
@@ -470,8 +462,7 @@ function PixModal(_ref8) {
       border: "none",
       color: "#555",
       fontSize: 24,
-      cursor: "pointer",
-      lineHeight: 1
+      cursor: "pointer"
     }
   }, "\xD7")), !settings.pixKey ? /*#__PURE__*/React.createElement("div", {
     style: {
@@ -504,12 +495,7 @@ function PixModal(_ref8) {
       color: "#22c55e",
       marginBottom: 6
     }
-  }, "Pagamento enviado!"), /*#__PURE__*/React.createElement("p", {
-    style: {
-      color: "#777",
-      fontSize: 13
-    }
-  }, "O Studio confirmar\xE1 em breve"), /*#__PURE__*/React.createElement(Btn, {
+  }, "Pagamento enviado!"), /*#__PURE__*/React.createElement(Btn, {
     onClick: onPaid,
     style: {
       marginTop: 20
@@ -594,7 +580,7 @@ function PixModal(_ref8) {
       color: "#86efac",
       lineHeight: 1.7
     }
-  }, "\uD83D\uDCF1 Abra seu banco \u2192 PIX \u2192 transfira ", /*#__PURE__*/React.createElement("strong", null, "R$ ", service.price, ",00"), " para a chave acima"), /*#__PURE__*/React.createElement(Btn, {
+  }, "\uD83D\uDCF1 Abra seu banco \u2192 PIX \u2192 transfira ", /*#__PURE__*/React.createElement("strong", null, "R$ ", service.price, ",00")), /*#__PURE__*/React.createElement(Btn, {
     onClick: function onClick() {
       return setPaid(true);
     },
@@ -611,8 +597,6 @@ function PixModal(_ref8) {
     }
   }, "Pagar presencialmente"))));
 }
-
-// ─── TELA: AGENDAR ────────────────────────────────────────────────
 function ScreenAgendar(_ref11) {
   var _form$service, _form$service4, _form$service5;
   var settings = _ref11.settings,
@@ -653,12 +637,12 @@ function ScreenAgendar(_ref11) {
     _useState14 = _slicedToArray(_useState13, 2),
     blocked = _useState14[0],
     setBlocked = _useState14[1];
-  var activeServices = services.filter(function (s) {
+  var active = services.filter(function (s) {
     return s.active;
   });
   useEffect(function () {
     _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee4() {
-      var apts, _t3;
+      var a, _t3;
       return _regenerator().w(function (_context4) {
         while (1) switch (_context4.n) {
           case 0:
@@ -672,11 +656,11 @@ function ScreenAgendar(_ref11) {
             }
             _t3 = [];
           case 2:
-            apts = _t3;
-            setBooked(apts.filter(function (a) {
-              return a.date === form.date;
-            }).map(function (a) {
-              return a.time;
+            a = _t3;
+            setBooked(a.filter(function (x) {
+              return x.date === form.date;
+            }).map(function (x) {
+              return x.time;
             }));
           case 3:
             return _context4.a(2);
@@ -690,7 +674,6 @@ function ScreenAgendar(_ref11) {
         clients,
         apts,
         newApt,
-        msg,
         _args5 = arguments,
         _t4,
         _t5;
@@ -736,7 +719,6 @@ function ScreenAgendar(_ref11) {
               client: form.name,
               phone: form.phone,
               service: form.service.name,
-              serviceId: form.service.id,
               date: form.date,
               time: form.time,
               notify: form.notify,
@@ -763,10 +745,8 @@ function ScreenAgendar(_ref11) {
               createdAt: new Date().toISOString()
             }]));
           case 7:
-            // Telegram
             if (settings.telegramToken && settings.telegramChatId) {
-              msg = "\uD83D\uDC88 <b>Novo Agendamento!</b>\n\n\uD83D\uDC64 <b>".concat(form.name, "</b>\n\uD83D\uDCF1 ").concat(form.phone, "\n\u2702\uFE0F ").concat(form.service.name, "\n\uD83D\uDCC5 ").concat(fmtDate(form.date), " \xE0s ").concat(form.time, "\n\uD83D\uDCB0 R$").concat(form.service.price, ",00").concat(pagou ? " — <b>PIX PAGO ✓</b>" : "", "\n\uD83D\uDCE3 Notif: ").concat(form.notify);
-              sendTelegram(settings.telegramToken, settings.telegramChatId, msg);
+              sendTelegram(settings.telegramToken, settings.telegramChatId, "\uD83D\uDC88 <b>Novo Agendamento!</b>\n\n\uD83D\uDC64 <b>".concat(form.name, "</b>\n\uD83D\uDCF1 ").concat(form.phone, "\n\u2702\uFE0F ").concat(form.service.name, "\n\uD83D\uDCC5 ").concat(fmtDate(form.date), " \xE0s ").concat(form.time, "\n\uD83D\uDCB0 R$").concat(form.service.price, ",00").concat(pagou ? " — <b>PIX PAGO ✓</b>" : ""));
             }
             setForm(function (f) {
               return _objectSpread(_objectSpread({}, f), {}, {
@@ -787,8 +767,7 @@ function ScreenAgendar(_ref11) {
   if (done) return /*#__PURE__*/React.createElement("div", {
     style: {
       textAlign: "center",
-      padding: "40px 20px",
-      animation: "fadeIn .4s ease"
+      padding: "40px 20px"
     }
   }, /*#__PURE__*/React.createElement("style", null, css), /*#__PURE__*/React.createElement("div", {
     style: {
@@ -819,12 +798,7 @@ function ScreenAgendar(_ref11) {
     }
   }, /*#__PURE__*/React.createElement(Badge, {
     color: "#22c55e"
-  }, "PIX PAGO \u2713")), /*#__PURE__*/React.createElement("p", {
-    style: {
-      color: "#555",
-      fontSize: 13
-    }
-  }, "Confirma\xE7\xE3o via ", form.notify === "sms" ? "SMS" : form.notify === "telegram" ? "Telegram" : "App"), /*#__PURE__*/React.createElement(Btn, {
+  }, "PIX PAGO \u2713")), /*#__PURE__*/React.createElement(Btn, {
     onClick: function onClick() {
       setStep(1);
       setForm({
@@ -913,18 +887,14 @@ function ScreenAgendar(_ref11) {
         fontWeight: step === i + 1 ? 700 : 400
       }
     }, s));
-  })), step === 1 && /*#__PURE__*/React.createElement("div", {
-    style: {
-      animation: "fadeIn .3s ease"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
+  })), step === 1 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
       gap: 10,
       marginBottom: 24
     }
-  }, activeServices.map(function (s) {
+  }, active.map(function (s) {
     var _form$service2, _form$service3;
     return /*#__PURE__*/React.createElement("div", {
       key: s.id,
@@ -941,8 +911,7 @@ function ScreenAgendar(_ref11) {
         borderRadius: 14,
         padding: "16px 12px",
         cursor: "pointer",
-        textAlign: "center",
-        transition: "all .2s"
+        textAlign: "center"
       }
     }, /*#__PURE__*/React.createElement("div", {
       style: {
@@ -975,11 +944,7 @@ function ScreenAgendar(_ref11) {
     },
     disabled: !form.service,
     full: true
-  }, "Pr\xF3ximo \u2192")), step === 2 && /*#__PURE__*/React.createElement("div", {
-    style: {
-      animation: "fadeIn .3s ease"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
+  }, "Pr\xF3ximo \u2192")), step === 2 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
@@ -1033,8 +998,7 @@ function ScreenAgendar(_ref11) {
         cursor: tk ? "not-allowed" : "pointer",
         color: tk ? "#2a2a2a" : form.time === h ? "#c8a97e" : "#888",
         fontSize: 12,
-        fontWeight: 600,
-        transition: "all .15s"
+        fontWeight: 600
       }
     }, h);
   })))), /*#__PURE__*/React.createElement("div", {
@@ -1058,11 +1022,7 @@ function ScreenAgendar(_ref11) {
     style: {
       flex: 2
     }
-  }, "Pr\xF3ximo \u2192"))), step === 3 && /*#__PURE__*/React.createElement("div", {
-    style: {
-      animation: "fadeIn .3s ease"
-    }
-  }, /*#__PURE__*/React.createElement("div", {
+  }, "Pr\xF3ximo \u2192"))), step === 3 && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
@@ -1115,10 +1075,9 @@ function ScreenAgendar(_ref11) {
       padding: 14,
       marginBottom: 16,
       color: "#fca5a5",
-      fontSize: 13,
-      lineHeight: 1.5
+      fontSize: 13
     }
-  }, "\u26D4 Este n\xFAmero est\xE1 bloqueado. Entre em contato com o Studio diretamente."), /*#__PURE__*/React.createElement(Card, {
+  }, "\u26D4 Este n\xFAmero est\xE1 bloqueado. Entre em contato com o Studio."), /*#__PURE__*/React.createElement(Card, {
     style: {
       marginBottom: 16,
       background: "#111"
@@ -1131,7 +1090,7 @@ function ScreenAgendar(_ref11) {
       letterSpacing: 1,
       textTransform: "uppercase"
     }
-  }, "Resumo do agendamento"), [["Serviço", (_form$service4 = form.service) === null || _form$service4 === void 0 ? void 0 : _form$service4.name], ["Data", fmtDate(form.date)], ["Horário", form.time], ["Valor", "R$ ".concat((_form$service5 = form.service) === null || _form$service5 === void 0 ? void 0 : _form$service5.price, ",00")]].map(function (_ref14) {
+  }, "Resumo"), [["Serviço", (_form$service4 = form.service) === null || _form$service4 === void 0 ? void 0 : _form$service4.name], ["Data", fmtDate(form.date)], ["Horário", form.time], ["Valor", "R$ ".concat((_form$service5 = form.service) === null || _form$service5 === void 0 ? void 0 : _form$service5.price, ",00")]].map(function (_ref14) {
     var _ref15 = _slicedToArray(_ref14, 2),
       k = _ref15[0],
       v = _ref15[1];
@@ -1189,15 +1148,312 @@ function ScreenAgendar(_ref11) {
     }
   }, "\uD83D\uDCB8 Pagar agora com PIX")));
 }
-
-// ─── TELA: PROMOÇÕES ─────────────────────────────────────────────
-function ScreenPromos(_ref16) {
-  var promos = _ref16.promos,
-    isAdmin = _ref16.isAdmin,
-    onEdit = _ref16.onEdit;
-  var visible = promos.filter(function (p) {
-    return isAdmin || p.active;
-  });
+function ScreenGaleria(_ref16) {
+  var isAdmin = _ref16.isAdmin;
+  var _useState15 = useState(null),
+    _useState16 = _slicedToArray(_useState15, 2),
+    fotos = _useState16[0],
+    setFotos = _useState16[1];
+  var _useState17 = useState(null),
+    _useState18 = _slicedToArray(_useState17, 2),
+    selected = _useState18[0],
+    setSelected = _useState18[1];
+  useEffect(function () {
+    _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee6() {
+      var f, _t6;
+      return _regenerator().w(function (_context6) {
+        while (1) switch (_context6.n) {
+          case 0:
+            _context6.n = 1;
+            return DB.get("galeria");
+          case 1:
+            _t6 = _context6.v;
+            if (_t6) {
+              _context6.n = 2;
+              break;
+            }
+            _t6 = [];
+          case 2:
+            f = _t6;
+            setFotos(_toConsumableArray(f).reverse());
+          case 3:
+            return _context6.a(2);
+        }
+      }, _callee6);
+    }))();
+  }, []);
+  var addFoto = /*#__PURE__*/function () {
+    var _ref18 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee7(e) {
+      var file, b64, caption, all, updated, _t7, _t8;
+      return _regenerator().w(function (_context7) {
+        while (1) switch (_context7.n) {
+          case 0:
+            file = e.target.files[0];
+            if (file) {
+              _context7.n = 1;
+              break;
+            }
+            return _context7.a(2);
+          case 1:
+            _context7.n = 2;
+            return toBase64(file);
+          case 2:
+            b64 = _context7.v;
+            caption = window.prompt("Legenda da foto (opcional):") || "";
+            _context7.n = 3;
+            return DB.get("galeria");
+          case 3:
+            _t7 = _context7.v;
+            if (_t7) {
+              _context7.n = 4;
+              break;
+            }
+            _t7 = [];
+          case 4:
+            all = _t7;
+            _context7.n = 5;
+            return DB.set("galeria", [].concat(_toConsumableArray(all), [{
+              id: Date.now().toString(),
+              img: b64,
+              caption: caption,
+              createdAt: new Date().toISOString()
+            }]));
+          case 5:
+            _context7.n = 6;
+            return DB.get("galeria");
+          case 6:
+            _t8 = _context7.v;
+            if (_t8) {
+              _context7.n = 7;
+              break;
+            }
+            _t8 = [];
+          case 7:
+            updated = _t8;
+            setFotos(_toConsumableArray(updated).reverse());
+          case 8:
+            return _context7.a(2);
+        }
+      }, _callee7);
+    }));
+    return function addFoto(_x7) {
+      return _ref18.apply(this, arguments);
+    };
+  }();
+  var deleteFoto = /*#__PURE__*/function () {
+    var _ref19 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee8(id) {
+      var all, _t9;
+      return _regenerator().w(function (_context8) {
+        while (1) switch (_context8.n) {
+          case 0:
+            if (window.confirm("Apagar esta foto?")) {
+              _context8.n = 1;
+              break;
+            }
+            return _context8.a(2);
+          case 1:
+            _context8.n = 2;
+            return DB.get("galeria");
+          case 2:
+            _t9 = _context8.v;
+            if (_t9) {
+              _context8.n = 3;
+              break;
+            }
+            _t9 = [];
+          case 3:
+            all = _t9;
+            _context8.n = 4;
+            return DB.set("galeria", all.filter(function (f) {
+              return f.id !== id;
+            }));
+          case 4:
+            setFotos(function (prev) {
+              return prev.filter(function (f) {
+                return f.id !== id;
+              });
+            });
+          case 5:
+            return _context8.a(2);
+        }
+      }, _callee8);
+    }));
+    return function deleteFoto(_x8) {
+      return _ref19.apply(this, arguments);
+    };
+  }();
+  return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("style", null, css), selected && /*#__PURE__*/React.createElement("div", {
+    onClick: function onClick() {
+      return setSelected(null);
+    },
+    style: {
+      position: "fixed",
+      inset: 0,
+      background: "#000e",
+      zIndex: 400,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 16
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    onClick: function onClick(e) {
+      return e.stopPropagation();
+    },
+    style: {
+      maxWidth: 400,
+      width: "100%"
+    }
+  }, /*#__PURE__*/React.createElement("img", {
+    src: selected.img,
+    alt: "",
+    style: {
+      width: "100%",
+      borderRadius: 12,
+      maxHeight: "70vh",
+      objectFit: "contain"
+    }
+  }), selected.caption && /*#__PURE__*/React.createElement("p", {
+    style: {
+      color: "#e5e5e5",
+      textAlign: "center",
+      marginTop: 10,
+      fontSize: 14
+    }
+  }, selected.caption), /*#__PURE__*/React.createElement("button", {
+    onClick: function onClick() {
+      return setSelected(null);
+    },
+    style: {
+      display: "block",
+      margin: "14px auto 0",
+      background: "none",
+      border: "1px solid #555",
+      color: "#aaa",
+      borderRadius: 8,
+      padding: "8px 20px",
+      cursor: "pointer",
+      fontFamily: "inherit"
+    }
+  }, "Fechar"))), /*#__PURE__*/React.createElement("div", {
+    style: {
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: 4
+    }
+  }, /*#__PURE__*/React.createElement("h2", {
+    style: {
+      color: "#c8a97e",
+      fontSize: 22
+    }
+  }, "Galeria"), isAdmin && /*#__PURE__*/React.createElement("label", {
+    style: {
+      background: "linear-gradient(135deg,#c8a97e,#a07850)",
+      color: "#0d0d0d",
+      borderRadius: 10,
+      padding: "8px 16px",
+      fontSize: 13,
+      fontWeight: 700,
+      cursor: "pointer"
+    }
+  }, "+ Foto", /*#__PURE__*/React.createElement("input", {
+    type: "file",
+    accept: "image/*",
+    onChange: addFoto,
+    style: {
+      display: "none"
+    }
+  }))), /*#__PURE__*/React.createElement("p", {
+    style: {
+      color: "#555",
+      fontSize: 13,
+      marginBottom: 20
+    }
+  }, "Trabalhos do Studio Paulo Barbier"), fotos === null ? /*#__PURE__*/React.createElement(Loader, null) : fotos.length === 0 ? /*#__PURE__*/React.createElement(Card, {
+    style: {
+      textAlign: "center",
+      padding: 40
+    }
+  }, /*#__PURE__*/React.createElement("div", {
+    style: {
+      fontSize: 44,
+      marginBottom: 12
+    }
+  }, "\uD83D\uDCF8"), /*#__PURE__*/React.createElement("p", {
+    style: {
+      color: "#555",
+      fontSize: 14
+    }
+  }, "Nenhuma foto ainda"), isAdmin && /*#__PURE__*/React.createElement("p", {
+    style: {
+      color: "#444",
+      fontSize: 12,
+      marginTop: 6
+    }
+  }, "Clique em \"+ Foto\" para adicionar")) : /*#__PURE__*/React.createElement("div", {
+    style: {
+      columns: 2,
+      gap: 10
+    }
+  }, fotos.map(function (f) {
+    return /*#__PURE__*/React.createElement("div", {
+      key: f.id,
+      style: {
+        breakInside: "avoid",
+        marginBottom: 10,
+        position: "relative"
+      }
+    }, /*#__PURE__*/React.createElement("img", {
+      src: f.img,
+      alt: f.caption,
+      onClick: function onClick() {
+        return setSelected(f);
+      },
+      style: {
+        width: "100%",
+        borderRadius: 10,
+        display: "block",
+        cursor: "pointer",
+        objectFit: "cover"
+      }
+    }), f.caption && /*#__PURE__*/React.createElement("p", {
+      style: {
+        color: "#aaa",
+        fontSize: 11,
+        padding: "4px 6px",
+        background: "#0008",
+        borderRadius: "0 0 10px 10px",
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        margin: 0
+      }
+    }, f.caption), isAdmin && /*#__PURE__*/React.createElement("button", {
+      onClick: function onClick() {
+        return deleteFoto(f.id);
+      },
+      style: {
+        position: "absolute",
+        top: 6,
+        right: 6,
+        background: "#7f1d1d",
+        border: "none",
+        color: "#fca5a5",
+        borderRadius: 6,
+        padding: "3px 8px",
+        fontSize: 11,
+        cursor: "pointer",
+        fontFamily: "inherit"
+      }
+    }, "\u2715"));
+  })));
+}
+function ScreenPromos(_ref20) {
+  var promos = _ref20.promos,
+    isAdmin = _ref20.isAdmin,
+    onEdit = _ref20.onEdit;
   return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("style", null, css), /*#__PURE__*/React.createElement("h2", {
     style: {
       color: "#c8a97e",
@@ -1210,7 +1466,9 @@ function ScreenPromos(_ref16) {
       fontSize: 13,
       marginBottom: 24
     }
-  }, "Ofertas exclusivas do Studio"), visible.length === 0 && /*#__PURE__*/React.createElement(Card, {
+  }, "Ofertas exclusivas do Studio"), promos.filter(function (p) {
+    return isAdmin || p.active;
+  }).length === 0 && /*#__PURE__*/React.createElement(Card, {
     style: {
       textAlign: "center",
       padding: 32
@@ -1219,13 +1477,15 @@ function ScreenPromos(_ref16) {
     style: {
       color: "#555"
     }
-  }, "Nenhuma promo\xE7\xE3o ativa no momento")), /*#__PURE__*/React.createElement("div", {
+  }, "Nenhuma promo\xE7\xE3o ativa")), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
       gap: 12
     }
-  }, visible.map(function (p, i) {
+  }, promos.filter(function (p) {
+    return isAdmin || p.active;
+  }).map(function (p, i) {
     return /*#__PURE__*/React.createElement(Card, {
       key: p.id || i,
       style: {
@@ -1297,155 +1557,185 @@ function ScreenPromos(_ref16) {
     }
   }, "+ Nova Promo\xE7\xE3o"));
 }
-
-// ─── TELA: FÓRUM ─────────────────────────────────────────────────
 function ScreenForum() {
-  var _useState15 = useState(null),
-    _useState16 = _slicedToArray(_useState15, 2),
-    posts = _useState16[0],
-    setPosts = _useState16[1];
-  var _useState17 = useState(""),
-    _useState18 = _slicedToArray(_useState17, 2),
-    text = _useState18[0],
-    setText = _useState18[1];
-  var _useState19 = useState(""),
+  var _useState19 = useState(null),
     _useState20 = _slicedToArray(_useState19, 2),
-    author = _useState20[0],
-    setAuthor = _useState20[1];
+    posts = _useState20[0],
+    setPosts = _useState20[1];
   var _useState21 = useState(""),
     _useState22 = _slicedToArray(_useState21, 2),
-    phone = _useState22[0],
-    setPhone = _useState22[1];
-  var _useState23 = useState(false),
+    text = _useState22[0],
+    setText = _useState22[1];
+  var _useState23 = useState(""),
     _useState24 = _slicedToArray(_useState23, 2),
-    sending = _useState24[0],
-    setSending = _useState24[1];
+    author = _useState24[0],
+    setAuthor = _useState24[1];
+  var _useState25 = useState(""),
+    _useState26 = _slicedToArray(_useState25, 2),
+    phone = _useState26[0],
+    setPhone = _useState26[1];
+  var _useState27 = useState(null),
+    _useState28 = _slicedToArray(_useState27, 2),
+    imgData = _useState28[0],
+    setImgData = _useState28[1];
+  var _useState29 = useState(false),
+    _useState30 = _slicedToArray(_useState29, 2),
+    sending = _useState30[0],
+    setSending = _useState30[1];
   useEffect(function () {
-    _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee6() {
-      var p, _t6;
-      return _regenerator().w(function (_context6) {
-        while (1) switch (_context6.n) {
+    _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee9() {
+      var p, _t0;
+      return _regenerator().w(function (_context9) {
+        while (1) switch (_context9.n) {
           case 0:
-            _context6.n = 1;
+            _context9.n = 1;
             return DB.get("posts");
           case 1:
-            _t6 = _context6.v;
-            if (_t6) {
-              _context6.n = 2;
+            _t0 = _context9.v;
+            if (_t0) {
+              _context9.n = 2;
               break;
             }
-            _t6 = [];
+            _t0 = [];
           case 2:
-            p = _t6;
+            p = _t0;
             setPosts(_toConsumableArray(p).reverse());
           case 3:
-            return _context6.a(2);
+            return _context9.a(2);
         }
-      }, _callee6);
+      }, _callee9);
     }))();
   }, []);
+  var handleImg = /*#__PURE__*/function () {
+    var _ref22 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee0(e) {
+      var file, _t1;
+      return _regenerator().w(function (_context0) {
+        while (1) switch (_context0.n) {
+          case 0:
+            file = e.target.files[0];
+            if (file) {
+              _context0.n = 1;
+              break;
+            }
+            return _context0.a(2);
+          case 1:
+            _t1 = setImgData;
+            _context0.n = 2;
+            return toBase64(file);
+          case 2:
+            _t1(_context0.v);
+          case 3:
+            return _context0.a(2);
+        }
+      }, _callee0);
+    }));
+    return function handleImg(_x9) {
+      return _ref22.apply(this, arguments);
+    };
+  }();
   var publish = /*#__PURE__*/function () {
-    var _ref18 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee7() {
-      var posts, np, all, _t7, _t8;
-      return _regenerator().w(function (_context7) {
-        while (1) switch (_context7.n) {
+    var _ref23 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee1() {
+      var all, updated, _t10, _t11;
+      return _regenerator().w(function (_context1) {
+        while (1) switch (_context1.n) {
           case 0:
             if (!(!text.trim() || !author.trim() || !phone.trim())) {
-              _context7.n = 1;
+              _context1.n = 1;
               break;
             }
-            return _context7.a(2);
+            return _context1.a(2);
           case 1:
             setSending(true);
-            _context7.n = 2;
+            _context1.n = 2;
             return DB.get("posts");
           case 2:
-            _t7 = _context7.v;
-            if (_t7) {
-              _context7.n = 3;
+            _t10 = _context1.v;
+            if (_t10) {
+              _context1.n = 3;
               break;
             }
-            _t7 = [];
+            _t10 = [];
           case 3:
-            posts = _t7;
-            np = {
+            all = _t10;
+            _context1.n = 4;
+            return DB.set("posts", [].concat(_toConsumableArray(all), [{
               id: Date.now().toString(),
               author: author,
               phone: phone,
               avatar: author[0].toUpperCase(),
               text: text,
+              img: imgData,
               likes: 0,
               createdAt: new Date().toISOString()
-            };
-            _context7.n = 4;
-            return DB.set("posts", [].concat(_toConsumableArray(posts), [np]));
+            }]));
           case 4:
-            _context7.n = 5;
+            _context1.n = 5;
             return DB.get("posts");
           case 5:
-            _t8 = _context7.v;
-            if (_t8) {
-              _context7.n = 6;
+            _t11 = _context1.v;
+            if (_t11) {
+              _context1.n = 6;
               break;
             }
-            _t8 = [];
+            _t11 = [];
           case 6:
-            all = _t8;
-            setPosts(_toConsumableArray(all).reverse());
+            updated = _t11;
+            setPosts(_toConsumableArray(updated).reverse());
             setText("");
+            setImgData(null);
             setSending(false);
           case 7:
-            return _context7.a(2);
+            return _context1.a(2);
         }
-      }, _callee7);
+      }, _callee1);
     }));
     return function publish() {
-      return _ref18.apply(this, arguments);
+      return _ref23.apply(this, arguments);
     };
   }();
   var like = /*#__PURE__*/function () {
-    var _ref19 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee8(post) {
-      var all, updated, _t9, _t0;
-      return _regenerator().w(function (_context8) {
-        while (1) switch (_context8.n) {
+    var _ref24 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee10(post) {
+      var all, updated, _t12, _t13;
+      return _regenerator().w(function (_context10) {
+        while (1) switch (_context10.n) {
           case 0:
-            _context8.n = 1;
+            _context10.n = 1;
             return DB.get("posts");
           case 1:
-            _t9 = _context8.v;
-            if (_t9) {
-              _context8.n = 2;
+            _t12 = _context10.v;
+            if (_t12) {
+              _context10.n = 2;
               break;
             }
-            _t9 = [];
+            _t12 = [];
           case 2:
-            all = _t9;
-            _context8.n = 3;
+            all = _t12;
+            _context10.n = 3;
             return DB.set("posts", all.map(function (p) {
               return p.id === post.id ? _objectSpread(_objectSpread({}, p), {}, {
                 likes: (p.likes || 0) + 1
               }) : p;
             }));
           case 3:
-            _context8.n = 4;
+            _context10.n = 4;
             return DB.get("posts");
           case 4:
-            _t0 = _context8.v;
-            if (_t0) {
-              _context8.n = 5;
+            _t13 = _context10.v;
+            if (_t13) {
+              _context10.n = 5;
               break;
             }
-            _t0 = [];
+            _t13 = [];
           case 5:
-            updated = _t0;
+            updated = _t13;
             setPosts(_toConsumableArray(updated).reverse());
           case 6:
-            return _context8.a(2);
+            return _context10.a(2);
         }
-      }, _callee8);
+      }, _callee10);
     }));
-    return function like(_x7) {
-      return _ref19.apply(this, arguments);
+    return function like(_x0) {
+      return _ref24.apply(this, arguments);
     };
   }();
   return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("style", null, css), /*#__PURE__*/React.createElement("h2", {
@@ -1460,7 +1750,7 @@ function ScreenForum() {
       fontSize: 13,
       marginBottom: 20
     }
-  }, "Compartilhe seu estilo e experi\xEAncias"), /*#__PURE__*/React.createElement(Card, {
+  }, "Compartilhe seu estilo"), /*#__PURE__*/React.createElement(Card, {
     style: {
       marginBottom: 20
     }
@@ -1478,7 +1768,7 @@ function ScreenForum() {
       return setAuthor(e.target.value);
     }
   }), /*#__PURE__*/React.createElement(Inp, {
-    placeholder: "Seu telefone (n\xE3o aparece publicamente)",
+    placeholder: "Telefone (n\xE3o aparece publicamente)",
     value: phone,
     onChange: function onChange(e) {
       return setPhone(e.target.value);
@@ -1501,14 +1791,38 @@ function ScreenForum() {
       minHeight: 70,
       boxSizing: "border-box"
     }
+  }), imgData && /*#__PURE__*/React.createElement("img", {
+    src: imgData,
+    alt: "",
+    style: {
+      width: "100%",
+      borderRadius: 8,
+      maxHeight: 180,
+      objectFit: "cover",
+      marginBottom: 8
+    }
   }), /*#__PURE__*/React.createElement("div", {
     style: {
       borderTop: "1px solid #252525",
       paddingTop: 12,
       display: "flex",
-      justifyContent: "flex-end"
+      justifyContent: "space-between",
+      alignItems: "center"
     }
-  }, /*#__PURE__*/React.createElement(Btn, {
+  }, /*#__PURE__*/React.createElement("label", {
+    style: {
+      color: "#888",
+      fontSize: 13,
+      cursor: "pointer"
+    }
+  }, "\uD83D\uDCF7 ", imgData ? "Trocar" : "Foto", /*#__PURE__*/React.createElement("input", {
+    type: "file",
+    accept: "image/*",
+    onChange: handleImg,
+    style: {
+      display: "none"
+    }
+  })), /*#__PURE__*/React.createElement(Btn, {
     onClick: publish,
     disabled: !text.trim() || !author.trim() || !phone.trim() || sending,
     style: {
@@ -1564,9 +1878,19 @@ function ScreenForum() {
         color: "#ccc",
         fontSize: 14,
         lineHeight: 1.65,
+        marginBottom: p.img ? 10 : 12
+      }
+    }, p.text), p.img && /*#__PURE__*/React.createElement("img", {
+      src: p.img,
+      alt: "",
+      style: {
+        width: "100%",
+        borderRadius: 10,
+        maxHeight: 220,
+        objectFit: "cover",
         marginBottom: 12
       }
-    }, p.text), /*#__PURE__*/React.createElement(Btn, {
+    }), /*#__PURE__*/React.createElement(Btn, {
       variant: "ghost",
       onClick: function onClick() {
         return like(p);
@@ -1578,10 +1902,8 @@ function ScreenForum() {
     }, "\u2764\uFE0F ", p.likes || 0));
   }));
 }
-
-// ─── TELA: REDES SOCIAIS ─────────────────────────────────────────
-function ScreenSocial(_ref20) {
-  var settings = _ref20.settings;
+function ScreenSocial(_ref25) {
+  var settings = _ref25.settings;
   var links = [{
     key: "instagram",
     icon: "📸",
@@ -1632,13 +1954,7 @@ function ScreenSocial(_ref20) {
       color: "#555",
       fontSize: 14
     }
-  }, "Redes sociais n\xE3o configuradas"), /*#__PURE__*/React.createElement("p", {
-    style: {
-      color: "#444",
-      fontSize: 12,
-      marginTop: 6
-    }
-  }, "ADM \u2192 Configura\xE7\xF5es \u2192 Redes Sociais")) : /*#__PURE__*/React.createElement("div", {
+  }, "Redes sociais n\xE3o configuradas")) : /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
@@ -1703,65 +2019,63 @@ function ScreenSocial(_ref20) {
     }
   }, "\uD83D\uDCCD ", settings.endereco)));
 }
-
-// ─── PAINEL ADM ───────────────────────────────────────────────────
-function ScreenAdmin(_ref21) {
-  var settings = _ref21.settings,
-    setSettings = _ref21.setSettings,
-    services = _ref21.services,
-    setServices = _ref21.setServices,
-    promos = _ref21.promos,
-    setPromos = _ref21.setPromos,
-    setAdminMode = _ref21.setAdminMode;
-  var _useState25 = useState("agenda"),
-    _useState26 = _slicedToArray(_useState25, 2),
-    tab = _useState26[0],
-    setTab = _useState26[1];
-  var _useState27 = useState(null),
-    _useState28 = _slicedToArray(_useState27, 2),
-    apts = _useState28[0],
-    setApts = _useState28[1];
-  var _useState29 = useState(null),
-    _useState30 = _slicedToArray(_useState29, 2),
-    clients = _useState30[0],
-    setClients = _useState30[1];
-  var _useState31 = useState(null),
+function ScreenAdmin(_ref26) {
+  var settings = _ref26.settings,
+    setSettings = _ref26.setSettings,
+    services = _ref26.services,
+    setServices = _ref26.setServices,
+    promos = _ref26.promos,
+    setPromos = _ref26.setPromos,
+    setAdminMode = _ref26.setAdminMode;
+  var _useState31 = useState("agenda"),
     _useState32 = _slicedToArray(_useState31, 2),
-    editPromo = _useState32[0],
-    setEditPromo = _useState32[1];
-  var _useState33 = useState(-1),
+    tab = _useState32[0],
+    setTab = _useState32[1];
+  var _useState33 = useState(null),
     _useState34 = _slicedToArray(_useState33, 2),
-    editPromoIdx = _useState34[0],
-    setEditPromoIdx = _useState34[1];
+    apts = _useState34[0],
+    setApts = _useState34[1];
   var _useState35 = useState(null),
     _useState36 = _slicedToArray(_useState35, 2),
-    editSvc = _useState36[0],
-    setEditSvc = _useState36[1];
-  var _useState37 = useState(_objectSpread({}, settings)),
+    clients = _useState36[0],
+    setClients = _useState36[1];
+  var _useState37 = useState(null),
     _useState38 = _slicedToArray(_useState37, 2),
-    loc = _useState38[0],
-    setLoc = _useState38[1];
-  var _useState39 = useState(false),
+    editPromo = _useState38[0],
+    setEditPromo = _useState38[1];
+  var _useState39 = useState(-1),
     _useState40 = _slicedToArray(_useState39, 2),
-    savingCfg = _useState40[0],
-    setSavingCfg = _useState40[1];
-  var _useState41 = useState(""),
+    editPromoIdx = _useState40[0],
+    setEditPromoIdx = _useState40[1];
+  var _useState41 = useState(null),
     _useState42 = _slicedToArray(_useState41, 2),
-    testTg = _useState42[0],
-    setTestTg = _useState42[1];
+    editSvc = _useState42[0],
+    setEditSvc = _useState42[1];
+  var _useState43 = useState(_objectSpread({}, settings)),
+    _useState44 = _slicedToArray(_useState43, 2),
+    loc = _useState44[0],
+    setLoc = _useState44[1];
+  var _useState45 = useState(false),
+    _useState46 = _slicedToArray(_useState45, 2),
+    savingCfg = _useState46[0],
+    setSavingCfg = _useState46[1];
+  var _useState47 = useState(""),
+    _useState48 = _slicedToArray(_useState47, 2),
+    testTg = _useState48[0],
+    setTestTg = _useState48[1];
   useEffect(function () {
     loadData();
   }, []);
   var loadData = /*#__PURE__*/function () {
-    var _ref22 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee9() {
+    var _ref27 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee11() {
       var _yield$Promise$all, _yield$Promise$all2, a, c;
-      return _regenerator().w(function (_context9) {
-        while (1) switch (_context9.n) {
+      return _regenerator().w(function (_context11) {
+        while (1) switch (_context11.n) {
           case 0:
-            _context9.n = 1;
+            _context11.n = 1;
             return Promise.all([DB.get("appointments") || [], DB.get("clients") || []]);
           case 1:
-            _yield$Promise$all = _context9.v;
+            _yield$Promise$all = _context11.v;
             _yield$Promise$all2 = _slicedToArray(_yield$Promise$all, 2);
             a = _yield$Promise$all2[0];
             c = _yield$Promise$all2[1];
@@ -1770,12 +2084,12 @@ function ScreenAdmin(_ref21) {
             }));
             setClients(_toConsumableArray(c || []).reverse());
           case 2:
-            return _context9.a(2);
+            return _context11.a(2);
         }
-      }, _callee9);
+      }, _callee11);
     }));
     return function loadData() {
-      return _ref22.apply(this, arguments);
+      return _ref27.apply(this, arguments);
     };
   }();
   var todayApts = (apts || []).filter(function (a) {
@@ -1784,72 +2098,119 @@ function ScreenAdmin(_ref21) {
   var upcomingApts = (apts || []).filter(function (a) {
     return a.date > today();
   }).slice(0, 10);
-  var cleanOld = /*#__PURE__*/function () {
-    var _ref23 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee0() {
-      var cut, n, _i, _arr, col, all, keep, _t1;
-      return _regenerator().w(function (_context0) {
-        while (1) switch (_context0.n) {
+  var cancelApt = /*#__PURE__*/function () {
+    var _ref28 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee12(id) {
+      var all, _t14;
+      return _regenerator().w(function (_context12) {
+        while (1) switch (_context12.n) {
           case 0:
-            cut = ago90();
-            n = 0;
-            _i = 0, _arr = ["appointments", "posts"];
+            _context12.n = 1;
+            return DB.get("appointments");
           case 1:
-            if (!(_i < _arr.length)) {
-              _context0.n = 5;
+            _t14 = _context12.v;
+            if (_t14) {
+              _context12.n = 2;
               break;
             }
-            col = _arr[_i];
-            _context0.n = 2;
-            return DB.get(col);
+            _t14 = [];
           case 2:
-            _t1 = _context0.v;
-            if (_t1) {
-              _context0.n = 3;
+            all = _t14;
+            _context12.n = 3;
+            return DB.set("appointments", all.filter(function (x) {
+              return x.id !== id;
+            }));
+          case 3:
+            setApts(function (prev) {
+              return prev.filter(function (x) {
+                return x.id !== id;
+              });
+            });
+          case 4:
+            return _context12.a(2);
+        }
+      }, _callee12);
+    }));
+    return function cancelApt(_x1) {
+      return _ref28.apply(this, arguments);
+    };
+  }();
+  var markNoShow = /*#__PURE__*/function () {
+    var _ref29 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee13(apt) {
+      var apts, clients, updated, _t15, _t16;
+      return _regenerator().w(function (_context13) {
+        while (1) switch (_context13.n) {
+          case 0:
+            _context13.n = 1;
+            return DB.get("appointments");
+          case 1:
+            _t15 = _context13.v;
+            if (_t15) {
+              _context13.n = 2;
               break;
             }
-            _t1 = [];
+            _t15 = [];
+          case 2:
+            apts = _t15;
+            _context13.n = 3;
+            return DB.set("appointments", apts.filter(function (x) {
+              return x.id !== apt.id;
+            }));
           case 3:
-            all = _t1;
-            keep = all.filter(function (x) {
-              return x.createdAt >= cut;
-            });
-            n += all.length - keep.length;
-            _context0.n = 4;
-            return DB.set(col, keep);
+            _context13.n = 4;
+            return DB.get("clients");
           case 4:
-            _i++;
-            _context0.n = 1;
-            break;
+            _t16 = _context13.v;
+            if (_t16) {
+              _context13.n = 5;
+              break;
+            }
+            _t16 = [];
           case 5:
-            alert("\u2705 ".concat(n, " registros com +90 dias removidos!"));
-            loadData();
+            clients = _t16;
+            updated = clients.map(function (c) {
+              if (c.phone === apt.phone) {
+                var noShows = (c.noShows || 0) + 1;
+                return _objectSpread(_objectSpread({}, c), {}, {
+                  noShows: noShows,
+                  blocked: noShows >= 3
+                });
+              }
+              return c;
+            });
+            _context13.n = 6;
+            return DB.set("clients", updated);
           case 6:
-            return _context0.a(2);
+            if (updated.find(function (c) {
+              return c.phone === apt.phone && c.blocked;
+            })) alert("\u26A0\uFE0F ".concat(apt.client, " bloqueado ap\xF3s 3 faltas!"));
+            loadData();
+          case 7:
+            return _context13.a(2);
         }
-      }, _callee0);
+      }, _callee13);
     }));
-    return function cleanOld() {
-      return _ref23.apply(this, arguments);
+    return function markNoShow(_x10) {
+      return _ref29.apply(this, arguments);
     };
   }();
   var toggleBlock = /*#__PURE__*/function () {
-    var _ref24 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee1(c) {
-      var all, _t10;
-      return _regenerator().w(function (_context1) {
-        while (1) switch (_context1.n) {
+    var _ref30 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee14(c) {
+      var all, _t17;
+      return _regenerator().w(function (_context14) {
+        while (1) switch (_context14.n) {
           case 0:
-            _context1.n = 1;
+            _context14.n = 1;
             return DB.get("clients");
           case 1:
-            _t10 = _context1.v;
-            if (_t10) {
-              _context1.n = 2;
+            _t17 = _context14.v;
+            if (_t17) {
+              _context14.n = 2;
               break;
             }
-            _t10 = [];
+            _t17 = [];
           case 2:
-            all = _t10;
-            _context1.n = 3;
+            all = _t17;
+            _context14.n = 3;
             return DB.set("clients", all.map(function (x) {
               return x.id === c.id ? _objectSpread(_objectSpread({}, x), {}, {
                 blocked: !x.blocked
@@ -1864,48 +2225,54 @@ function ScreenAdmin(_ref21) {
               });
             });
           case 4:
-            return _context1.a(2);
+            return _context14.a(2);
         }
-      }, _callee1);
+      }, _callee14);
     }));
-    return function toggleBlock(_x8) {
-      return _ref24.apply(this, arguments);
+    return function toggleBlock(_x11) {
+      return _ref30.apply(this, arguments);
     };
   }();
-  var cancelApt = /*#__PURE__*/function () {
-    var _ref25 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee10(id) {
-      var all, _t11;
-      return _regenerator().w(function (_context10) {
-        while (1) switch (_context10.n) {
+  var deleteClient = /*#__PURE__*/function () {
+    var _ref31 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee15(c) {
+      var all, _t18;
+      return _regenerator().w(function (_context15) {
+        while (1) switch (_context15.n) {
           case 0:
-            _context10.n = 1;
-            return DB.get("appointments");
-          case 1:
-            _t11 = _context10.v;
-            if (_t11) {
-              _context10.n = 2;
+            if (window.confirm("Apagar cliente ".concat(c.name, "?"))) {
+              _context15.n = 1;
               break;
             }
-            _t11 = [];
+            return _context15.a(2);
+          case 1:
+            _context15.n = 2;
+            return DB.get("clients");
           case 2:
-            all = _t11;
-            _context10.n = 3;
-            return DB.set("appointments", all.filter(function (x) {
-              return x.id !== id;
-            }));
+            _t18 = _context15.v;
+            if (_t18) {
+              _context15.n = 3;
+              break;
+            }
+            _t18 = [];
           case 3:
-            setApts(function (prev) {
+            all = _t18;
+            _context15.n = 4;
+            return DB.set("clients", all.filter(function (x) {
+              return x.id !== c.id;
+            }));
+          case 4:
+            setClients(function (prev) {
               return prev.filter(function (x) {
-                return x.id !== id;
+                return x.id !== c.id;
               });
             });
-          case 4:
-            return _context10.a(2);
+          case 5:
+            return _context15.a(2);
         }
-      }, _callee10);
+      }, _callee15);
     }));
-    return function cancelApt(_x9) {
-      return _ref25.apply(this, arguments);
+    return function deleteClient(_x12) {
+      return _ref31.apply(this, arguments);
     };
   }();
   var handlePromoEdit = function handlePromoEdit(p, i, action) {
@@ -1950,47 +2317,47 @@ function ScreenAdmin(_ref21) {
     setEditSvc(null);
   };
   var saveSettings = /*#__PURE__*/function () {
-    var _ref26 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee11() {
-      return _regenerator().w(function (_context11) {
-        while (1) switch (_context11.n) {
+    var _ref32 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee16() {
+      return _regenerator().w(function (_context16) {
+        while (1) switch (_context16.n) {
           case 0:
             setSavingCfg(true);
-            _context11.n = 1;
+            _context16.n = 1;
             return DB.set("settings", loc);
           case 1:
             setSettings(loc);
             setSavingCfg(false);
             alert("✅ Configurações salvas!");
           case 2:
-            return _context11.a(2);
+            return _context16.a(2);
         }
-      }, _callee11);
+      }, _callee16);
     }));
     return function saveSettings() {
-      return _ref26.apply(this, arguments);
+      return _ref32.apply(this, arguments);
     };
   }();
   var testTelegram = /*#__PURE__*/function () {
-    var _ref27 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee12() {
+    var _ref33 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee17() {
       var ok;
-      return _regenerator().w(function (_context12) {
-        while (1) switch (_context12.n) {
+      return _regenerator().w(function (_context17) {
+        while (1) switch (_context17.n) {
           case 0:
-            _context12.n = 1;
-            return sendTelegram(loc.telegramToken, loc.telegramChatId, "✅ Teste do Studio Paulo Barbier — Notificações funcionando!");
+            _context17.n = 1;
+            return sendTelegram(loc.telegramToken, loc.telegramChatId, "✅ Teste — Studio Paulo Barbier!");
           case 1:
-            ok = _context12.v;
-            setTestTg(ok ? "✅ Mensagem enviada! Verifique o Telegram." : "❌ Falhou. Verifique o Token e Chat ID.");
+            ok = _context17.v;
+            setTestTg(ok ? "✅ Mensagem enviada!" : "❌ Falhou. Verifique Token e Chat ID.");
           case 2:
-            return _context12.a(2);
+            return _context17.a(2);
         }
-      }, _callee12);
+      }, _callee17);
     }));
     return function testTelegram() {
-      return _ref27.apply(this, arguments);
+      return _ref33.apply(this, arguments);
     };
   }();
-  var TABS = [["agenda", "📅", "Agenda"], ["clientes", "👥", "Clientes"], ["servicos", "✂️", "Serviços"], ["promos", "🏷️", "Promos"], ["config", "⚙️", "Config"]];
+  var TABS = [["agenda", "📅", "Agenda"], ["clientes", "👥", "Clientes"], ["servicos", "✂️", "Serviços"], ["galeria", "📸", "Galeria"], ["promos", "🏷️", "Promos"], ["config", "⚙️", "Config"]];
   return /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("style", null, css), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
@@ -2021,11 +2388,11 @@ function ScreenAdmin(_ref21) {
     }
   }, [["📅", (apts || []).length, "Agendamentos"], ["👥", (clients || []).length, "Clientes"], ["⛔", (clients || []).filter(function (c) {
     return c.blocked;
-  }).length, "Bloqueados"]].map(function (_ref28) {
-    var _ref29 = _slicedToArray(_ref28, 3),
-      icon = _ref29[0],
-      val = _ref29[1],
-      label = _ref29[2];
+  }).length, "Bloqueados"]].map(function (_ref34) {
+    var _ref35 = _slicedToArray(_ref34, 3),
+      icon = _ref35[0],
+      val = _ref35[1],
+      label = _ref35[2];
     return /*#__PURE__*/React.createElement(Card, {
       key: label,
       style: {
@@ -2059,11 +2426,11 @@ function ScreenAdmin(_ref21) {
       padding: 4,
       overflowX: "auto"
     }
-  }, TABS.map(function (_ref30) {
-    var _ref31 = _slicedToArray(_ref30, 3),
-      k = _ref31[0],
-      icon = _ref31[1],
-      label = _ref31[2];
+  }, TABS.map(function (_ref36) {
+    var _ref37 = _slicedToArray(_ref36, 3),
+      k = _ref37[0],
+      icon = _ref37[1],
+      label = _ref37[2];
     return /*#__PURE__*/React.createElement("button", {
       key: k,
       onClick: function onClick() {
@@ -2071,15 +2438,15 @@ function ScreenAdmin(_ref21) {
       },
       style: {
         flex: 1,
-        minWidth: 56,
-        padding: "8px 4px",
+        minWidth: 46,
+        padding: "8px 2px",
         borderRadius: 8,
         border: "none",
         background: tab === k ? "#2a1f12" : "transparent",
         color: tab === k ? "#c8a97e" : "#555",
         fontWeight: 600,
         cursor: "pointer",
-        fontSize: 10,
+        fontSize: 9,
         fontFamily: "inherit",
         display: "flex",
         flexDirection: "column",
@@ -2088,17 +2455,14 @@ function ScreenAdmin(_ref21) {
       }
     }, /*#__PURE__*/React.createElement("span", {
       style: {
-        fontSize: 16
+        fontSize: 14
       }
     }, icon), label);
   })), tab === "agenda" && /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
     style: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
       marginBottom: 16
     }
-  }, /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("p", {
+  }, /*#__PURE__*/React.createElement("p", {
     style: {
       color: "#e5e5e5",
       fontWeight: 700,
@@ -2109,14 +2473,7 @@ function ScreenAdmin(_ref21) {
       color: "#555",
       fontSize: 12
     }
-  }, todayLabel())), /*#__PURE__*/React.createElement(Btn, {
-    variant: "danger",
-    onClick: cleanOld,
-    style: {
-      fontSize: 11,
-      padding: "6px 12px"
-    }
-  }, "\uD83D\uDDD1\uFE0F +90 dias")), apts === null ? /*#__PURE__*/React.createElement(Loader, null) : /*#__PURE__*/React.createElement(React.Fragment, null, todayApts.length === 0 ? /*#__PURE__*/React.createElement(Card, {
+  }, todayLabel())), apts === null ? /*#__PURE__*/React.createElement(Loader, null) : /*#__PURE__*/React.createElement(React.Fragment, null, todayApts.length === 0 ? /*#__PURE__*/React.createElement(Card, {
     style: {
       textAlign: "center",
       padding: 24,
@@ -2195,7 +2552,13 @@ function ScreenAdmin(_ref21) {
       }
     }, /*#__PURE__*/React.createElement(Badge, {
       color: "#22c55e"
-    }, "PIX \u2713"))), /*#__PURE__*/React.createElement(Btn, {
+    }, "PIX \u2713"))), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        flexDirection: "column",
+        gap: 4
+      }
+    }, /*#__PURE__*/React.createElement(Btn, {
       variant: "danger",
       onClick: function onClick() {
         return cancelApt(a.id);
@@ -2204,7 +2567,18 @@ function ScreenAdmin(_ref21) {
         fontSize: 10,
         padding: "4px 8px"
       }
-    }, "\u2715"))));
+    }, "\u2715 Cancelar"), /*#__PURE__*/React.createElement(Btn, {
+      variant: "soft",
+      onClick: function onClick() {
+        return markNoShow(a);
+      },
+      style: {
+        fontSize: 10,
+        padding: "4px 8px",
+        color: "#f59e0b",
+        borderColor: "#f59e0b44"
+      }
+    }, "\u26A0\uFE0F No-show")))));
   })), upcomingApts.length > 0 && /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("p", {
     style: {
       color: "#888",
@@ -2252,7 +2626,13 @@ function ScreenAdmin(_ref21) {
         color: "#666",
         fontSize: 12
       }
-    }, a.service, " \u2022 ", a.phone)), /*#__PURE__*/React.createElement(Btn, {
+    }, a.service, " \u2022 ", a.phone)), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        flexDirection: "column",
+        gap: 4
+      }
+    }, /*#__PURE__*/React.createElement(Btn, {
       variant: "danger",
       onClick: function onClick() {
         return cancelApt(a.id);
@@ -2261,7 +2641,18 @@ function ScreenAdmin(_ref21) {
         fontSize: 10,
         padding: "4px 8px"
       }
-    }, "\u2715")));
+    }, "\u2715"), /*#__PURE__*/React.createElement(Btn, {
+      variant: "soft",
+      onClick: function onClick() {
+        return markNoShow(a);
+      },
+      style: {
+        fontSize: 10,
+        padding: "4px 8px",
+        color: "#f59e0b",
+        borderColor: "#f59e0b44"
+      }
+    }, "\u26A0\uFE0F"))));
   })))), tab === "clientes" && /*#__PURE__*/React.createElement("div", null, clients === null ? /*#__PURE__*/React.createElement(Loader, null) : clients.length === 0 ? /*#__PURE__*/React.createElement(Card, {
     style: {
       textAlign: "center",
@@ -2271,7 +2662,7 @@ function ScreenAdmin(_ref21) {
     style: {
       color: "#444"
     }
-  }, "Nenhum cliente cadastrado ainda")) : clients.map(function (c) {
+  }, "Nenhum cliente ainda")) : clients.map(function (c) {
     return /*#__PURE__*/React.createElement(Card, {
       key: c.id,
       style: {
@@ -2305,16 +2696,38 @@ function ScreenAdmin(_ref21) {
         fontSize: 13,
         marginTop: 3
       }
-    }, "\uD83D\uDCF1 ", c.phone)), /*#__PURE__*/React.createElement(Btn, {
+    }, "\uD83D\uDCF1 ", c.phone), (c.noShows || 0) > 0 && /*#__PURE__*/React.createElement("div", {
+      style: {
+        color: "#555",
+        fontSize: 12,
+        marginTop: 2
+      }
+    }, "No-shows: ", c.noShows)), /*#__PURE__*/React.createElement("div", {
+      style: {
+        display: "flex",
+        flexDirection: "column",
+        gap: 6
+      }
+    }, /*#__PURE__*/React.createElement(Btn, {
       variant: c.blocked ? "success" : "danger",
       onClick: function onClick() {
         return toggleBlock(c);
       },
       style: {
         fontSize: 11,
-        padding: "7px 12px"
+        padding: "6px 10px"
       }
-    }, c.blocked ? "Desbloquear" : "Bloquear")));
+    }, c.blocked ? "Desbloquear" : "Bloquear"), /*#__PURE__*/React.createElement(Btn, {
+      variant: "soft",
+      onClick: function onClick() {
+        return deleteClient(c);
+      },
+      style: {
+        fontSize: 11,
+        padding: "6px 10px",
+        color: "#888"
+      }
+    }, "\uD83D\uDDD1\uFE0F Apagar"))));
   })), tab === "servicos" && (editSvc ? /*#__PURE__*/React.createElement(Card, null, /*#__PURE__*/React.createElement("h3", {
     style: {
       color: "#c8a97e",
@@ -2397,16 +2810,11 @@ function ScreenAdmin(_ref21) {
     style: {
       flex: 2
     }
-  }, "Salvar"))) : /*#__PURE__*/React.createElement("div", null, /*#__PURE__*/React.createElement("div", {
-    style: {
-      display: "flex",
-      flexDirection: "column",
-      gap: 10
-    }
-  }, services.map(function (s) {
+  }, "Salvar"))) : /*#__PURE__*/React.createElement("div", null, services.map(function (s) {
     return /*#__PURE__*/React.createElement(Card, {
       key: s.id,
       style: {
+        marginBottom: 10,
         opacity: s.active ? 1 : 0.5
       }
     }, /*#__PURE__*/React.createElement("div", {
@@ -2473,7 +2881,7 @@ function ScreenAdmin(_ref21) {
         padding: "6px 10px"
       }
     }, s.active ? "Off" : "On"))));
-  })), /*#__PURE__*/React.createElement(Btn, {
+  }), /*#__PURE__*/React.createElement(Btn, {
     onClick: function onClick() {
       return setEditSvc({
         name: "",
@@ -2488,7 +2896,9 @@ function ScreenAdmin(_ref21) {
     style: {
       marginTop: 14
     }
-  }, "+ Novo Servi\xE7o"))), tab === "promos" && (editPromo ? /*#__PURE__*/React.createElement(Card, null, /*#__PURE__*/React.createElement("h3", {
+  }, "+ Novo Servi\xE7o"))), tab === "galeria" && /*#__PURE__*/React.createElement(ScreenGaleria, {
+    isAdmin: true
+  }), tab === "promos" && (editPromo ? /*#__PURE__*/React.createElement(Card, null, /*#__PURE__*/React.createElement("h3", {
     style: {
       color: "#c8a97e",
       marginBottom: 16
@@ -2501,7 +2911,6 @@ function ScreenAdmin(_ref21) {
     }
   }, /*#__PURE__*/React.createElement(Inp, {
     label: "T\xEDtulo",
-    placeholder: "Ex: Segunda Econ\xF4mica",
     value: editPromo.title,
     onChange: function onChange(e) {
       return setEditPromo(function (p) {
@@ -2512,7 +2921,6 @@ function ScreenAdmin(_ref21) {
     }
   }), /*#__PURE__*/React.createElement(Inp, {
     label: "Descri\xE7\xE3o",
-    placeholder: "Detalhes da promo\xE7\xE3o",
     value: editPromo.desc,
     onChange: function onChange(e) {
       return setEditPromo(function (p) {
@@ -2529,7 +2937,6 @@ function ScreenAdmin(_ref21) {
     }
   }, /*#__PURE__*/React.createElement(Inp, {
     label: "Badge",
-    placeholder: "SEG",
     value: editPromo.badge,
     onChange: function onChange(e) {
       return setEditPromo(function (p) {
@@ -2540,7 +2947,6 @@ function ScreenAdmin(_ref21) {
     }
   }), /*#__PURE__*/React.createElement(Inp, {
     label: "Cor hex",
-    placeholder: "#22c55e",
     value: editPromo.color,
     onChange: function onChange(e) {
       return setEditPromo(function (p) {
@@ -2596,7 +3002,6 @@ function ScreenAdmin(_ref21) {
     }
   }, /*#__PURE__*/React.createElement(Inp, {
     label: "Nome",
-    placeholder: "Studio Paulo Barbier",
     value: loc.barbearia,
     onChange: function onChange(e) {
       return setLoc(function (s) {
@@ -2607,7 +3012,6 @@ function ScreenAdmin(_ref21) {
     }
   }), /*#__PURE__*/React.createElement(Inp, {
     label: "Endere\xE7o",
-    placeholder: "S\xE3o Paulo - SP",
     value: loc.endereco,
     onChange: function onChange(e) {
       return setLoc(function (s) {
@@ -2627,7 +3031,6 @@ function ScreenAdmin(_ref21) {
   }, /*#__PURE__*/React.createElement(Inp, {
     label: "Senha principal",
     type: "password",
-    placeholder: "Senha de acesso",
     value: loc.adminPass,
     onChange: function onChange(e) {
       return setLoc(function (s) {
@@ -2639,7 +3042,6 @@ function ScreenAdmin(_ref21) {
   }), /*#__PURE__*/React.createElement(Inp, {
     label: "C\xF3digo de emerg\xEAncia",
     type: "password",
-    placeholder: "Para recuperar acesso",
     value: loc.emergencyCode,
     onChange: function onChange(e) {
       return setLoc(function (s) {
@@ -2657,7 +3059,7 @@ function ScreenAdmin(_ref21) {
       color: "#666",
       lineHeight: 1.6
     }
-  }, "\uD83D\uDCA1 Se esquecer a senha, use o c\xF3digo de emerg\xEAncia na tela de login para redefinir.")))), /*#__PURE__*/React.createElement(Card, null, /*#__PURE__*/React.createElement(Section, {
+  }, "\uD83D\uDCA1 Cliente \xE9 bloqueado automaticamente ap\xF3s 3 no-shows.")))), /*#__PURE__*/React.createElement(Card, null, /*#__PURE__*/React.createElement(Section, {
     title: "\uD83D\uDCB8 PIX"
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -2678,7 +3080,6 @@ function ScreenAdmin(_ref21) {
     }
   }), /*#__PURE__*/React.createElement(Inp, {
     label: "Nome do favorecido",
-    placeholder: "Paulo Barbier",
     value: loc.pixName,
     onChange: function onChange(e) {
       return setLoc(function (s) {
@@ -2699,7 +3100,7 @@ function ScreenAdmin(_ref21) {
       });
     }
   })))), /*#__PURE__*/React.createElement(Card, null, /*#__PURE__*/React.createElement(Section, {
-    title: "\u2708\uFE0F Telegram (notifica\xE7\xF5es)"
+    title: "\u2708\uFE0F Telegram"
   }, /*#__PURE__*/React.createElement("div", {
     style: {
       background: "#0a1520",
@@ -2711,7 +3112,7 @@ function ScreenAdmin(_ref21) {
       color: "#7eb8f0",
       lineHeight: 1.8
     }
-  }, /*#__PURE__*/React.createElement("strong", null, "Como configurar:"), /*#__PURE__*/React.createElement("br", null), "1. Abra o Telegram \u2192 pesquise ", /*#__PURE__*/React.createElement("strong", null, "@BotFather"), /*#__PURE__*/React.createElement("br", null), "2. Digite ", /*#__PURE__*/React.createElement("strong", null, "/newbot"), " \u2192 siga as instru\xE7\xF5es", /*#__PURE__*/React.createElement("br", null), "3. Copie o ", /*#__PURE__*/React.createElement("strong", null, "Token"), " gerado", /*#__PURE__*/React.createElement("br", null), "4. Abra seu novo Bot \u2192 clique Start", /*#__PURE__*/React.createElement("br", null), "5. Acesse: api.telegram.org/bot", /*#__PURE__*/React.createElement("strong", null, "[TOKEN]"), "/getUpdates", /*#__PURE__*/React.createElement("br", null), "6. Copie o ", /*#__PURE__*/React.createElement("strong", null, "id"), " que aparece em \"chat\"", /*#__PURE__*/React.createElement("br", null), "7. Cole os dados abaixo e salve"), /*#__PURE__*/React.createElement("div", {
+  }, /*#__PURE__*/React.createElement("strong", null, "Como configurar:"), /*#__PURE__*/React.createElement("br", null), "1. Telegram \u2192 ", /*#__PURE__*/React.createElement("strong", null, "@BotFather"), /*#__PURE__*/React.createElement("br", null), "2. Digite ", /*#__PURE__*/React.createElement("strong", null, "/newbot"), /*#__PURE__*/React.createElement("br", null), "3. Copie o ", /*#__PURE__*/React.createElement("strong", null, "Token"), /*#__PURE__*/React.createElement("br", null), "4. Abra o Bot \u2192 Start", /*#__PURE__*/React.createElement("br", null), "5. api.telegram.org/bot", /*#__PURE__*/React.createElement("strong", null, "[TOKEN]"), "/getUpdates", /*#__PURE__*/React.createElement("br", null), "6. Copie o ", /*#__PURE__*/React.createElement("strong", null, "id"), " do chat"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
@@ -2750,7 +3151,7 @@ function ScreenAdmin(_ref21) {
     style: {
       marginBottom: 6
     }
-  }, "\uD83D\uDCE8 Enviar mensagem de teste"), testTg && /*#__PURE__*/React.createElement("p", {
+  }, "\uD83D\uDCE8 Testar notifica\xE7\xE3o"), testTg && /*#__PURE__*/React.createElement("p", {
     style: {
       color: testTg.startsWith("✅") ? "#86efac" : "#fca5a5",
       fontSize: 12,
@@ -2778,7 +3179,7 @@ function ScreenAdmin(_ref21) {
     }
   }), /*#__PURE__*/React.createElement(Inp, {
     label: "WhatsApp",
-    placeholder: "11999990000 (s\xF3 n\xFAmeros)",
+    placeholder: "11999990000",
     value: loc.whatsapp,
     onChange: function onChange(e) {
       return setLoc(function (s) {
@@ -2800,7 +3201,6 @@ function ScreenAdmin(_ref21) {
     }
   }), /*#__PURE__*/React.createElement(Inp, {
     label: "Facebook",
-    placeholder: "usuario ou p\xE1gina",
     value: loc.facebook,
     onChange: function onChange(e) {
       return setLoc(function (s) {
@@ -2812,84 +3212,76 @@ function ScreenAdmin(_ref21) {
   })))), /*#__PURE__*/React.createElement(Btn, {
     onClick: saveSettings,
     disabled: savingCfg,
-    full: true,
-    style: {
-      marginBottom: 4
-    }
+    full: true
   }, savingCfg ? "Salvando..." : "💾 Salvar todas as configurações")));
 }
-
-// ─── LOGIN ADM ────────────────────────────────────────────────────
-function LoginModal(_ref32) {
-  var settings = _ref32.settings,
-    onSuccess = _ref32.onSuccess,
-    onClose = _ref32.onClose;
-  var _useState43 = useState(""),
-    _useState44 = _slicedToArray(_useState43, 2),
-    pass = _useState44[0],
-    setPass = _useState44[1];
-  var _useState45 = useState("login"),
-    _useState46 = _slicedToArray(_useState45, 2),
-    mode = _useState46[0],
-    setMode = _useState46[1]; // login | recovery
-  var _useState47 = useState(""),
-    _useState48 = _slicedToArray(_useState47, 2),
-    code = _useState48[0],
-    setCode = _useState48[1];
+function LoginModal(_ref38) {
+  var settings = _ref38.settings,
+    setSettings = _ref38.setSettings,
+    onSuccess = _ref38.onSuccess,
+    onClose = _ref38.onClose;
   var _useState49 = useState(""),
     _useState50 = _slicedToArray(_useState49, 2),
-    newPass = _useState50[0],
-    setNewPass = _useState50[1];
-  var _useState51 = useState(""),
+    pass = _useState50[0],
+    setPass = _useState50[1];
+  var _useState51 = useState("login"),
     _useState52 = _slicedToArray(_useState51, 2),
-    err = _useState52[0],
-    setErr = _useState52[1];
+    mode = _useState52[0],
+    setMode = _useState52[1];
+  var _useState53 = useState(""),
+    _useState54 = _slicedToArray(_useState53, 2),
+    code = _useState54[0],
+    setCode = _useState54[1];
+  var _useState55 = useState(""),
+    _useState56 = _slicedToArray(_useState55, 2),
+    newPass = _useState56[0],
+    setNewPass = _useState56[1];
+  var _useState57 = useState(""),
+    _useState58 = _slicedToArray(_useState57, 2),
+    err = _useState58[0],
+    setErr = _useState58[1];
   var tryLogin = function tryLogin() {
-    if (pass === settings.adminPass) {
-      onSuccess();
-    } else {
-      setErr("Senha incorreta");
-    }
+    if (pass === settings.adminPass) onSuccess();else setErr("Senha incorreta");
   };
   var tryRecover = /*#__PURE__*/function () {
-    var _ref33 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee13() {
-      var newSettings;
-      return _regenerator().w(function (_context13) {
-        while (1) switch (_context13.n) {
+    var _ref39 = _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee18() {
+      var ns;
+      return _regenerator().w(function (_context18) {
+        while (1) switch (_context18.n) {
           case 0:
             if (!(code !== settings.emergencyCode)) {
-              _context13.n = 1;
+              _context18.n = 1;
               break;
             }
-            setErr("Código de emergência incorreto");
-            return _context13.a(2);
+            setErr("Código incorreto");
+            return _context18.a(2);
           case 1:
             if (!(newPass.length < 4)) {
-              _context13.n = 2;
+              _context18.n = 2;
               break;
             }
-            setErr("Nova senha deve ter ao menos 4 caracteres");
-            return _context13.a(2);
+            setErr("Mínimo 4 caracteres");
+            return _context18.a(2);
           case 2:
-            newSettings = _objectSpread(_objectSpread({}, settings), {}, {
+            ns = _objectSpread(_objectSpread({}, settings), {}, {
               adminPass: newPass
             });
-            _context13.n = 3;
-            return DB.set("settings", newSettings);
+            _context18.n = 3;
+            return DB.set("settings", ns);
           case 3:
-            setSettings && setSettings(newSettings);
-            alert("✅ Senha redefinida! Faça login com a nova senha.");
+            setSettings(ns);
+            alert("✅ Senha redefinida!");
             setMode("login");
             setCode("");
             setNewPass("");
             setErr("");
           case 4:
-            return _context13.a(2);
+            return _context18.a(2);
         }
-      }, _callee13);
+      }, _callee18);
     }));
     return function tryRecover() {
-      return _ref33.apply(this, arguments);
+      return _ref39.apply(this, arguments);
     };
   }();
   return /*#__PURE__*/React.createElement("div", {
@@ -2907,8 +3299,7 @@ function LoginModal(_ref32) {
     style: {
       width: "100%",
       maxWidth: 320,
-      background: "#161616",
-      animation: "fadeIn .3s ease"
+      background: "#161616"
     }
   }, mode === "login" ? /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h3", {
     style: {
@@ -2969,7 +3360,8 @@ function LoginModal(_ref32) {
       cursor: "pointer",
       width: "100%",
       marginTop: 12,
-      textDecoration: "underline"
+      textDecoration: "underline",
+      fontFamily: "inherit"
     }
   }, "Esqueci minha senha")) : /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement("h3", {
     style: {
@@ -2986,7 +3378,7 @@ function LoginModal(_ref32) {
       marginBottom: 20,
       lineHeight: 1.5
     }
-  }, "Use seu c\xF3digo de emerg\xEAncia para redefinir a senha"), /*#__PURE__*/React.createElement("div", {
+  }, "Use seu c\xF3digo de emerg\xEAncia"), /*#__PURE__*/React.createElement("div", {
     style: {
       display: "flex",
       flexDirection: "column",
@@ -2995,7 +3387,6 @@ function LoginModal(_ref32) {
   }, /*#__PURE__*/React.createElement(Inp, {
     label: "C\xF3digo de emerg\xEAncia",
     type: "password",
-    placeholder: "Seu c\xF3digo de recupera\xE7\xE3o",
     value: code,
     onChange: function onChange(e) {
       setCode(e.target.value);
@@ -3038,47 +3429,45 @@ function LoginModal(_ref32) {
     }
   }, "Redefinir")))));
 }
-
-// ─── APP PRINCIPAL ────────────────────────────────────────────────
 function App() {
-  var _useState53 = useState("agendar"),
-    _useState54 = _slicedToArray(_useState53, 2),
-    tab = _useState54[0],
-    setTab = _useState54[1];
-  var _useState55 = useState(false),
-    _useState56 = _slicedToArray(_useState55, 2),
-    adminMode = _useState56[0],
-    _setAdminMode = _useState56[1];
-  var _useState57 = useState(false),
-    _useState58 = _slicedToArray(_useState57, 2),
-    showLogin = _useState58[0],
-    setShowLogin = _useState58[1];
-  var _useState59 = useState(DEF_SETTINGS),
+  var _useState59 = useState("agendar"),
     _useState60 = _slicedToArray(_useState59, 2),
-    settings = _useState60[0],
-    setSettings = _useState60[1];
-  var _useState61 = useState(DEF_SERVICES),
+    tab = _useState60[0],
+    setTab = _useState60[1];
+  var _useState61 = useState(false),
     _useState62 = _slicedToArray(_useState61, 2),
-    services = _useState62[0],
-    setServices = _useState62[1];
-  var _useState63 = useState(DEF_PROMOS),
+    adminMode = _useState62[0],
+    _setAdminMode = _useState62[1];
+  var _useState63 = useState(false),
     _useState64 = _slicedToArray(_useState63, 2),
-    promos = _useState64[0],
-    setPromos = _useState64[1];
-  var _useState65 = useState(true),
+    showLogin = _useState64[0],
+    setShowLogin = _useState64[1];
+  var _useState65 = useState(DEF_SETTINGS),
     _useState66 = _slicedToArray(_useState65, 2),
-    booting = _useState66[0],
-    setBooting = _useState66[1];
+    settings = _useState66[0],
+    setSettings = _useState66[1];
+  var _useState67 = useState(DEF_SERVICES),
+    _useState68 = _slicedToArray(_useState67, 2),
+    services = _useState68[0],
+    setServices = _useState68[1];
+  var _useState69 = useState(DEF_PROMOS),
+    _useState70 = _slicedToArray(_useState69, 2),
+    promos = _useState70[0],
+    setPromos = _useState70[1];
+  var _useState71 = useState(true),
+    _useState72 = _slicedToArray(_useState71, 2),
+    booting = _useState72[0],
+    setBooting = _useState72[1];
   useEffect(function () {
-    _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee14() {
+    _asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee19() {
       var _yield$Promise$all3, _yield$Promise$all4, s, svc, prm;
-      return _regenerator().w(function (_context14) {
-        while (1) switch (_context14.n) {
+      return _regenerator().w(function (_context19) {
+        while (1) switch (_context19.n) {
           case 0:
-            _context14.n = 1;
+            _context19.n = 1;
             return Promise.all([DB.get("settings"), DB.get("services"), DB.get("promos")]);
           case 1:
-            _yield$Promise$all3 = _context14.v;
+            _yield$Promise$all3 = _context19.v;
             _yield$Promise$all4 = _slicedToArray(_yield$Promise$all3, 3);
             s = _yield$Promise$all4[0];
             svc = _yield$Promise$all4[1];
@@ -3088,13 +3477,11 @@ function App() {
             if (prm) setPromos(prm);
             setBooting(false);
           case 2:
-            return _context14.a(2);
+            return _context19.a(2);
         }
-      }, _callee14);
+      }, _callee19);
     }))();
   }, []);
-
-  // Persiste serviços e promos
   useEffect(function () {
     if (!booting) DB.set("services", services);
   }, [services, booting]);
@@ -3105,6 +3492,10 @@ function App() {
     id: "agendar",
     icon: "✂️",
     label: "Agendar"
+  }, {
+    id: "galeria",
+    icon: "📸",
+    label: "Galeria"
   }, {
     id: "promocoes",
     icon: "🏷️",
@@ -3136,12 +3527,7 @@ function App() {
     style: {
       fontSize: 60
     }
-  }, "\uD83D\uDC88"), /*#__PURE__*/React.createElement(Loader, null), /*#__PURE__*/React.createElement("p", {
-    style: {
-      color: "#333",
-      fontSize: 13
-    }
-  }, "Carregando..."));
+  }, "\uD83D\uDC88"), /*#__PURE__*/React.createElement(Loader, null));
   return /*#__PURE__*/React.createElement("div", {
     style: {
       fontFamily: "'Georgia','Times New Roman',serif",
@@ -3168,9 +3554,8 @@ function App() {
     style: {
       background: "linear-gradient(170deg,#1c1408 0%,#0d0d0d 100%)",
       borderBottom: "1px solid #2a1f0e",
-      padding: "18px 20px 16px",
-      textAlign: "center",
-      position: "relative"
+      padding: "16px 20px 14px",
+      textAlign: "center"
     }
   }, /*#__PURE__*/React.createElement("div", {
     style: {
@@ -3204,6 +3589,8 @@ function App() {
   }, tab === "agendar" && /*#__PURE__*/React.createElement(ScreenAgendar, {
     settings: settings,
     services: services
+  }), tab === "galeria" && /*#__PURE__*/React.createElement(ScreenGaleria, {
+    isAdmin: false
   }), tab === "promocoes" && /*#__PURE__*/React.createElement(ScreenPromos, {
     promos: promos,
     isAdmin: false,
@@ -3232,8 +3619,7 @@ function App() {
       background: "#0f0f0f",
       borderTop: "1px solid #1f1f1f",
       display: "flex",
-      zIndex: 50,
-      paddingBottom: "env(safe-area-inset-bottom)"
+      zIndex: 50
     }
   }, NAV.map(function (n) {
     var active = tab === n.id;
@@ -3248,14 +3634,14 @@ function App() {
       },
       style: {
         flex: 1,
-        padding: "12px 2px 10px",
+        padding: "10px 1px 8px",
         background: "transparent",
         border: "none",
         cursor: "pointer",
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        gap: 3,
+        gap: 2,
         fontFamily: "inherit",
         position: "relative"
       }
@@ -3263,21 +3649,20 @@ function App() {
       style: {
         position: "absolute",
         top: 0,
-        left: "20%",
-        right: "20%",
+        left: "15%",
+        right: "15%",
         height: 2,
         background: "#c8a97e",
         borderRadius: "0 0 2px 2px"
       }
     }), /*#__PURE__*/React.createElement("span", {
       style: {
-        fontSize: 18
+        fontSize: 16
       }
     }, n.icon), /*#__PURE__*/React.createElement("span", {
       style: {
-        fontSize: 9,
+        fontSize: 8,
         fontWeight: 600,
-        letterSpacing: .3,
         color: active ? "#c8a97e" : "#444"
       }
     }, n.label));
@@ -37330,6 +37715,4 @@ exports.clearImmediate = typeof clearImmediate === "function" ? clearImmediate :
 };
 }).call(this)}).call(this,require("timers").setImmediate,require("timers").clearImmediate)
 },{"process/browser.js":2,"timers":13}]},{},[1]);
-  </script>
-</body>
-</html>
+  </script></body></html>

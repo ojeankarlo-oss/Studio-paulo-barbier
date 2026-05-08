@@ -5,24 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
   <meta name="theme-color" content="#0d0d0d"/>
   <meta name="apple-mobile-web-app-capable" content="yes"/>
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
   <title>Studio Paulo Barbier</title>
-  <link rel="manifest" href="manifest.json"/>
   <style>
     *{margin:0;padding:0;box-sizing:border-box;}
-    body{background:#0d0d0d;font-family:Georgia,serif;-webkit-tap-highlight-color:transparent;}
-    input,select,textarea,button{-webkit-appearance:none;appearance:none;}
+    body{background:#0d0d0d;font-family:Georgia,serif;-webkit-tap-highlight-color:transparent;color:#e5e5e5;}
+    input,select,textarea,button{-webkit-appearance:none;appearance:none;font-family:inherit;}
   </style>
 </head>
 <body>
   <div id="root"></div>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
-  <script type="text/babel" data-presets="react">
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script type="text/babel">
 const { useState, useEffect } = React;
 
-// ─── STORAGE (localStorage) ───────────────────────────────────────
 const DB = {
   get: async (k) => { try { const v = localStorage.getItem('pb_'+k); return v ? JSON.parse(v) : null; } catch { return null; } },
   set: async (k, v) => { try { localStorage.setItem('pb_'+k, JSON.stringify(v)); } catch(e) { console.error(e); } },
@@ -879,7 +876,8 @@ function App() {
 }
 
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
+const container = document.getElementById('root');
+const root = ReactDOM.createRoot(container);
 root.render(React.createElement(App));
   </script>
 </body>
